@@ -1,20 +1,17 @@
 'use server'
 
-import { cookies } from 'next/headers'
-import { decrypt } from '@/lib/auth'
+import { sessaoAtual } from '@/lib/sessao'
 import { prisma } from '@/lib/prisma'
 import { EmailService } from '@/services/email.service'
 import { revalidatePath } from 'next/cache'
 
 export async function updateOrderAction(pedidoId: string, novoStatus: string, rastreamento: string, transportadora: string) {
   try {
-    const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('session')?.value
-    
-    if (!sessionCookie) return { success: false, message: 'Unauthorized' }
-    
-    const session = await decrypt(sessionCookie)
-    if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPERADMIN')) {
+    // Verifica a sessão no banco: papel real, sessão não revogada e conta
+    // ativa, em vez do papel gravado no token no momento do login.
+    const session = await sessaoAtual()
+    if (!session) return { success: false, message: 'Unauthorized' }
+    if (session.role !== 'ADMIN' && session.role !== 'SUPERADMIN') {
       return { success: false, message: 'Forbidden' }
     }
 
@@ -89,13 +86,11 @@ export async function updateOrderAction(pedidoId: string, novoStatus: string, ra
 
 export async function deleteOrderAction(pedidoId: string) {
   try {
-    const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('session')?.value
-    
-    if (!sessionCookie) return { success: false, message: 'Unauthorized' }
-    
-    const session = await decrypt(sessionCookie)
-    if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPERADMIN')) {
+    // Verifica a sessão no banco: papel real, sessão não revogada e conta
+    // ativa, em vez do papel gravado no token no momento do login.
+    const session = await sessaoAtual()
+    if (!session) return { success: false, message: 'Unauthorized' }
+    if (session.role !== 'ADMIN' && session.role !== 'SUPERADMIN') {
       return { success: false, message: 'Forbidden' }
     }
 

@@ -1,19 +1,14 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { decrypt } from '@/lib/auth'
+import { sessaoAtual } from '@/lib/sessao'
 
 export async function GET() {
-  const cookieStore = await cookies()
-  const session = cookieStore.get('session')?.value
+  // Confere a sessão no banco: um token de sessão revogada ou de conta
+  // desativada não deve mais ser aceito aqui.
+  const user = await sessaoAtual()
 
-  if (!session) {
+  if (!user) {
     return NextResponse.json({ user: null }, { status: 401 })
   }
 
-  const payload = await decrypt(session)
-  if (!payload) {
-    return NextResponse.json({ user: null }, { status: 401 })
-  }
-
-  return NextResponse.json({ user: payload })
+  return NextResponse.json({ user })
 }

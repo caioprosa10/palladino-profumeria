@@ -1,26 +1,18 @@
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { decrypt } from '@/lib/auth'
+import { sessaoAtual } from '@/lib/sessao'
 import { prisma } from '@/lib/prisma'
 import { Navbar } from '@/components/layout/Navbar'
 import Link from 'next/link'
 
 export default async function ClientePage() {
-  const cookieStore = await cookies()
-  const sessionCookie = cookieStore.get('session')?.value
+  const session = await sessaoAtual()
 
-  if (!sessionCookie) {
-    redirect('/login')
-  }
-
-  const session = await decrypt(sessionCookie)
-
-  if (!session || !session.id) {
+  if (!session) {
     redirect('/login')
   }
 
   const user = await prisma.user.findUnique({
-    where: { id: session.id as string },
+    where: { id: session.id },
     include: {
       pedidos: {
         orderBy: { createdAt: 'desc' },

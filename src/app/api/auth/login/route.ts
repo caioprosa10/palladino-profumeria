@@ -7,6 +7,10 @@ import { cookies } from 'next/headers'
 import { SecurityService } from '@/services/security.service'
 import { AuditService } from '@/services/audit.service'
 import { lerCorpo, respostaDeCorpoInvalido, ipDaRequisicao } from '@/lib/validacao'
+import { registrarSessao } from '@/lib/sessao'
+
+/** Mesma janela do JWT emitido em lib/auth.ts. */
+const DURACAO_SESSAO = 60 * 60 * 24
 
 const loginSchema = z.object({
   email: z.string().email('Credenciais inválidas').max(254),
@@ -55,12 +59,21 @@ export async function POST(req: Request) {
     // Gerar token
     const token = await encrypt({ id: user.id, email: user.email, nome: user.nome, role: user.role })
 
+    // Registra a sessão para que o logout possa revogá-la de fato.
+    await registrarSessao({
+      usuarioId: user.id,
+      token,
+      ip,
+      userAgent: req.headers.get('user-agent'),
+      duracaoSegundos: DURACAO_SESSAO,
+    })
+
     // Setar cookie
     const cookieStore = await cookies()
     cookieStore.set('session', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24, // 1 dia
+      maxAge: DURACAO_SESSAO,
       path: '/',
       sameSite: 'lax',
     })

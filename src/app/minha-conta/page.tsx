@@ -1,26 +1,19 @@
 import { Navbar } from '@/components/layout/Navbar'
-import { cookies } from 'next/headers'
-import { decrypt } from '@/lib/auth'
+import { sessaoAtual } from '@/lib/sessao'
 import { prisma } from '@/lib/prisma'
 import { decifrar } from '@/lib/cripto'
 import { redirect } from 'next/navigation'
 import LogoutButton from './LogoutButton'
 
 export default async function MinhaContaPage() {
-  const cookieStore = await cookies()
-  const session = cookieStore.get('session')?.value
+  const payload = await sessaoAtual()
 
-  if (!session) {
-    redirect('/login')
-  }
-
-  const payload = await decrypt(session)
   if (!payload) {
     redirect('/login')
   }
 
   const user = await prisma.user.findUnique({
-    where: { id: payload.id as string },
+    where: { id: payload.id },
     include: {
       pedidos: true,
       enderecos: true,

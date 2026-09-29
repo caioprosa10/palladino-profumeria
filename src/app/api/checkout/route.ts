@@ -1,8 +1,7 @@
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { cookies } from 'next/headers';
-import { decrypt } from '@/lib/auth';
+import { sessaoAtual } from '@/lib/sessao';
 import { v4 as uuidv4 } from 'uuid';
 import { shippingService } from '@/services/MelhorEnvioService';
 import { SecurityService } from '@/services/security.service';
@@ -69,20 +68,16 @@ export async function POST(request: Request) {
       );
     }
 
-    // 1. Verificação de Autenticação (Apenas usuários logados podem comprar)
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get('session')?.value;
+    // 1. Verificação de Autenticação (Apenas usuários logados podem comprar).
+    // sessaoAtual confere também se a sessão foi revogada e se a conta
+    // segue ativa, em vez de confiar apenas no JWT.
+    const session = await sessaoAtual();
 
-    if (!sessionCookie) {
+    if (!session) {
       return NextResponse.json({ error: 'Você precisa estar logado para finalizar a compra.' }, { status: 401 });
     }
 
-    const session = await decrypt(sessionCookie);
-    if (!session || !session.id) {
-      return NextResponse.json({ error: 'Sessão inválida.' }, { status: 401 });
-    }
-
-    const userId = session.id as string;
+    const userId = session.id;
 
     const body = await lerCorpo(request, checkoutSchema);
     const quantidadePorProduto = lerItensDoCarrinho(body.cart);

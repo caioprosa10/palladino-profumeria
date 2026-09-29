@@ -1,8 +1,6 @@
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { NextResponse } from 'next/server'
-import { decrypt } from './auth'
-import { prisma } from './prisma'
+import { sessaoAtual } from './sessao'
 
 /**
  * Autorização de administrador.
@@ -29,29 +27,18 @@ type Resultado =
   | { ok: false; status: 401 | 403 }
 
 async function autenticarAdmin(apenasSuperAdmin = false): Promise<Resultado> {
-  const cookieStore = await cookies()
-  const token = cookieStore.get('session')?.value
+  // sessaoAtual confere o JWT, o registro da sessão (revogada? expirada?)
+  // e se a conta continua ativa — tudo lido do banco, não do token.
+  const user = await sessaoAtual()
 
-  if (!token) return { ok: false, status: 401 }
-
-  const payload = await decrypt(token)
-  if (!payload?.id) return { ok: false, status: 401 }
-
-  const user = await prisma.user.findUnique({
-    where: { id: payload.id as string },
-    select: { id: true, nome: true, email: true, role: true, ativo: true },
-  })
-
-  // Conta apagada ou desativada depois de o token ter sido emitido.
-  if (!user || !user.ativo) return { ok: false, status: 401 }
+  if (!user) return { ok: false, status: 401 }
 
   const papeisAceitos = apenasSuperAdmin ? ['SUPERADMIN'] : ['ADMIN', 'SUPERADMIN']
   if (!papeisAceitos.includes(user.role)) {
     return { ok: false, status: 403 }
   }
 
-  const { ativo, ...sessao } = user
-  return { ok: true, user: sessao }
+  return { ok: true, user }
 }
 
 /**
