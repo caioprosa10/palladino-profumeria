@@ -51,6 +51,28 @@ export class EmailService {
     `;
   }
 
+  static async sendPasswordReset(to: string, userName: string, link: string) {
+    const html = this.baseHtml('Redefinição de senha', `
+      <h2>Redefinição de senha</h2>
+      <p>Olá <strong>${userName}</strong>,</p>
+      <p>Recebemos um pedido para redefinir a senha da sua conta. Se foi você, use o botão abaixo:</p>
+      <div style="text-align: center;">
+        <a href="${link}" class="btn" style="color: #ffffff;">Criar nova senha</a>
+      </div>
+      <p style="font-size: 13px; color: #666;">
+        O link vale por 30 minutos e só pode ser usado uma vez.
+        Se não foi você que pediu, ignore este e-mail — sua senha atual continua valendo.
+      </p>
+    `);
+
+    return transporter.sendMail({
+      from: `"${STORE_NAME}" <${STORE_EMAIL}>`,
+      to,
+      subject: 'Redefinição de senha — Palladino Profumeria',
+      html
+    });
+  }
+
   static async sendOrderConfirmed(to: string, userName: string, orderId: string, total: number) {
     const html = this.baseHtml('Confirmação de Pedido', `
       <h2>Seu pedido foi confirmado na Palladino Profumeria ✨</h2>
