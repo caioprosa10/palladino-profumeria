@@ -1,28 +1,44 @@
 @import "tailwindcss";
 
 /* -------------------------------------------------------------
- * DESIGN SYSTEM & ROOT VARIABLES (LIGHT THEME)
+ * DESIGN SYSTEM
+ *
+ * Paleta extraída do próprio selo Palladino: azul-marinho de
+ * impressão, dourado fosco e o marfim do papel. O dourado é
+ * acento — fios, versaletes e detalhes —, nunca área cheia.
  * ------------------------------------------------------------- */
 :root {
-    /* Base Clara */
-    --color-bg: #ffffff;
-    --color-bg-alt: #f9f9f9;
-    
-    /* Textos Escuros */
-    --color-text-primary: #000000;
-    --color-text-secondary: rgba(0, 0, 0, 0.7);
-    --color-text-muted: rgba(0, 0, 0, 0.4);
-    
-    /* Destaques em Dourado */
-    --color-gold: #c5a059;
-    --color-gold-bright: #e5c158;
-    --color-gold-dark: #8e6d2f;
-    --color-gold-rgb: 197, 160, 89;
-    
-    /* Tipografia Mantida */
+    /* Base marfim, quente em vez do branco puro */
+    --color-bg: #faf8f3;
+    --color-bg-alt: #f2eee4;
+    --color-surface: #fffdf8;
+
+    /* Tinta azul-marinho do selo, no lugar do preto puro */
+    --color-ink: #152a47;
+    --color-ink-deep: #0b1b30;
+    --color-text-primary: #152a47;
+    --color-text-secondary: rgba(21, 42, 71, 0.72);
+    --color-text-muted: rgba(21, 42, 71, 0.45);
+
+    /* Dourado fosco do selo */
+    --color-gold: #a98b5d;
+    --color-gold-bright: #c4a674;
+    --color-gold-dark: #7d6539;
+    --color-gold-rgb: 169, 139, 93;
+
+    /* Fios e separadores */
+    --hairline: rgba(21, 42, 71, 0.12);
+    --hairline-strong: rgba(21, 42, 71, 0.22);
+
+    /* Sombras discretas, sem drama */
+    --shadow-soft: 0 1px 2px rgba(11, 27, 48, 0.04);
+    --shadow-lift: 0 18px 40px -18px rgba(11, 27, 48, 0.22);
+
+    /* Tipografia */
     --font-serif: 'Cormorant Garamond', serif;
     --font-sans: 'Montserrat', sans-serif;
-    
+    --tracking-label: 0.22em;
+
     /* Transições */
     --transition-smooth: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
     --transition-fast: all 0.3s ease;
@@ -46,15 +62,12 @@ body {
     min-height: 100vh;
     overflow-x: hidden;
     position: relative;
-    
-    background-image: url('/background.jpg');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    
-    /* Cor base clara de fallback */
-    background-color: var(--color-bg); 
+
+    /* Marfim liso. O padrão geométrico anterior era um motivo árabe,
+       que não corresponde mais à identidade florentina da marca. */
+    background-color: var(--color-bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 body.sub-page {
@@ -99,7 +112,7 @@ body.sub-page {
 .loader-bar-container {
     width: 100%;
     height: 1px;
-    background-color: rgba(0, 0, 0, 0.1);
+    background-color: var(--hairline);
     position: relative;
     overflow: hidden;
 }
@@ -144,12 +157,12 @@ body.sub-page {
     justify-content: space-between;
     align-items: center;
     z-index: 100;
-    /* Liquid Glass Effect */
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.05) 100%);
-    backdrop-filter: blur(16px) saturate(120%);
-    -webkit-backdrop-filter: blur(16px) saturate(120%);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+    /* Marfim translúcido sobre o conteúdo, fechado por um fio fino */
+    background: rgba(250, 248, 243, 0.82);
+    backdrop-filter: blur(14px) saturate(115%);
+    -webkit-backdrop-filter: blur(14px) saturate(115%);
+    border-bottom: 1px solid var(--hairline);
+    box-shadow: none;
 }
 
 .logo {
@@ -355,42 +368,24 @@ body.sub-page {
     gap: 10px;
 }
 
-/* Botão Primário Adaptado para Fundo Claro (Preto e Dourado) */
+/* Primário: marinho cheio, que no hover aprofunda e ganha fio dourado */
 .btn-primary {
-    background-color: var(--color-text-primary);
+    background-color: var(--color-ink);
     color: var(--color-bg);
-    border: 1px solid var(--color-text-primary);
-    position: relative;
-    overflow: hidden;
-    z-index: 1;
-}
-
-.btn-primary::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 0;
-    height: 100%;
-    background-color: var(--color-gold);
-    z-index: -1;
-    transition: var(--transition-smooth);
+    border: 1px solid var(--color-ink);
 }
 
 .btn-primary:hover {
-    color: var(--color-text-primary);
+    background-color: var(--color-ink-deep);
     border-color: var(--color-gold);
+    color: var(--color-bg);
 }
 
-.btn-primary:hover::before {
-    width: 100%;
-}
-
-/* Botão Secundário Adaptado */
+/* Secundário: apenas contorno, o gesto mais discreto */
 .btn-secondary {
     background: transparent;
-    color: var(--color-text-primary);
-    border: 1px solid rgba(0, 0, 0, 0.15);
+    color: var(--color-ink);
+    border: 1px solid var(--hairline-strong);
 }
 
 .btn-secondary svg {
@@ -399,13 +394,20 @@ body.sub-page {
 }
 
 .btn-secondary:hover {
-    border-color: var(--color-gold);
-    background-color: rgba(0, 0, 0, 0.03);
+    border-color: var(--color-ink);
+    background-color: rgba(21, 42, 71, 0.04);
 }
 
 .btn-secondary:hover svg {
     transform: translateX(4px);
     color: var(--color-gold-dark);
+}
+
+.btn:focus-visible,
+.icon-btn:focus-visible,
+.nav-item:focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 3px;
 }
 
 /* -------------------------------------------------------------
@@ -549,10 +551,10 @@ body.sub-page {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(to bottom, 
-        rgba(255, 255, 255, 0.4) 0%, 
-        rgba(255, 255, 255, 0.85) 70%, 
-        rgba(255, 255, 255, 1) 100%
+    background: linear-gradient(to bottom,
+        rgba(250, 248, 243, 0.35) 0%,
+        rgba(250, 248, 243, 0.88) 70%,
+        rgba(250, 248, 243, 1) 100%
     );
     z-index: 2;
 }
@@ -612,13 +614,12 @@ body.sub-page {
     margin: 0 auto;
 }
 
-/* Glassmorphism Claro para os Cards */
+/* Cartões sólidos: o vidro borrado competia com a foto do produto */
 .perfume-card {
-    background-color: rgba(255, 255, 255, 0.65);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    border-radius: 12px;
+    background-color: var(--color-surface);
+    border: 1px solid var(--hairline);
+    border-radius: 2px;
+    box-shadow: var(--shadow-soft);
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -630,9 +631,9 @@ body.sub-page {
 }
 
 .perfume-card:hover {
-    transform: translateY(-10px);
-    border-color: rgba(197, 160, 89, 0.5);
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px);
+    border-color: var(--color-gold);
+    box-shadow: var(--shadow-lift);
 }
 
 .card-img-wrapper {
@@ -641,7 +642,7 @@ body.sub-page {
     padding-top: 133%;
     overflow: hidden;
     background-color: var(--color-bg-alt);
-    border-radius: 12px;
+    border-radius: 0;
 }
 
 .card-img {
@@ -651,18 +652,22 @@ body.sub-page {
     width: 90%;
     height: 90%;
     object-fit: cover;
-    border-radius: 8px;
+    border-radius: 0;
     transition: transform 2.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .perfume-card:hover .card-img {
-    transform: scale(1.08);
+    transform: scale(1.04);
 }
 
-.card-img-variant-blue { filter: hue-rotate(190deg) brightness(0.9) contrast(1.1); }
-.card-img-variant-amber { filter: hue-rotate(35deg) saturate(1.2) contrast(1.05); }
-.card-img-variant-silver { filter: saturate(0.1) brightness(1.05) contrast(1.1); }
-.card-img-variant-gold { filter: sepia(0.3) saturate(1.3) brightness(0.95) contrast(1.05); }
+/* Estas classes tingiam a foto do produto (hue-rotate/sépia) para simular
+   variações a partir de uma única imagem de exemplo. Com fotos reais no
+   catálogo, a cor exibida passa a ser a cor real do frasco. As classes
+   continuam existindo porque o CartDrawer ainda as aplica. */
+.card-img-variant-blue,
+.card-img-variant-amber,
+.card-img-variant-silver,
+.card-img-variant-gold { filter: none; }
 
 /* Overlay claro no hover */
 .card-hover-overlay {
@@ -671,9 +676,9 @@ body.sub-page {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
+    background-color: rgba(250, 248, 243, 0.72);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -687,19 +692,19 @@ body.sub-page {
 }
 
 .btn-card {
-    color: var(--color-text-primary);
-    border: 1px solid var(--color-gold);
+    color: var(--color-ink);
+    border: 1px solid var(--color-ink);
     padding: 14px 28px;
     font-size: 0.65rem;
     font-weight: 500;
-    letter-spacing: 0.2em;
+    letter-spacing: var(--tracking-label);
     text-transform: uppercase;
     transition: var(--transition-smooth);
-    background-color: rgba(255, 255, 255, 0.8);
+    background-color: var(--color-surface);
 }
 
 .btn-card:hover {
-    background-color: var(--color-gold);
+    background-color: var(--color-ink);
     color: var(--color-bg);
 }
 
@@ -763,7 +768,7 @@ body.sub-page {
     width: 100%;
     background-color: transparent;
     padding: 140px 8% 120px 8%;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid var(--hairline);
 }
 
 .about-container {
@@ -811,7 +816,7 @@ body.sub-page {
     display: flex;
     gap: 50px;
     margin-top: 15px;
-    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    border-top: 1px solid var(--hairline);
     padding-top: 30px;
 }
 
@@ -849,7 +854,7 @@ body.sub-page {
     height: auto;
     object-fit: cover;
     display: block;
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--hairline);
     transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -899,7 +904,7 @@ body.sub-page {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(255, 255, 255, 0.65);
+    background-color: var(--color-surface);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     opacity: 0;
@@ -918,8 +923,8 @@ body.sub-page {
     max-width: 460px;
     height: 100%;
     background-color: var(--color-bg);
-    border-left: 1px solid rgba(0, 0, 0, 0.05);
-    box-shadow: -20px 0 60px rgba(0, 0, 0, 0.1);
+    border-left: 1px solid var(--hairline);
+    box-shadow: -20px 0 60px rgba(11, 27, 48, 0.12);
     display: flex;
     flex-direction: column;
     transform: translateX(100%);
@@ -936,7 +941,7 @@ body.sub-page {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid var(--hairline);
 }
 
 .drawer-title {
@@ -966,7 +971,7 @@ body.sub-page {
 /* Abas */
 .drawer-tabs {
     display: flex;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid var(--hairline);
 }
 
 .tab-btn {
@@ -1048,7 +1053,7 @@ body.sub-page {
 .cart-item {
     display: flex;
     align-items: center;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid var(--hairline);
     padding-bottom: 20px;
     position: relative;
     transition: var(--transition-smooth);
@@ -1059,7 +1064,7 @@ body.sub-page {
     height: 90px;
     object-fit: cover;
     background-color: var(--color-bg-alt);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--hairline);
 }
 
 .cart-item-info {
@@ -1122,7 +1127,7 @@ body.sub-page {
 /* Rodapé de checkout */
 .cart-summary-footer {
     padding: 30px 40px 40px 40px;
-    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    border-top: 1px solid var(--hairline);
     background-color: var(--color-bg-alt);
     display: flex;
     flex-direction: column;
@@ -1141,7 +1146,7 @@ body.sub-page {
 }
 
 .highlight-total {
-    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    border-top: 1px solid var(--hairline);
     padding-top: 18px;
     font-size: 0.95rem;
     font-weight: 500;
@@ -1183,7 +1188,7 @@ body.sub-page {
 
 .order-card {
     background-color: var(--color-bg-alt);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--hairline);
     padding: 24px;
     display: flex;
     flex-direction: column;
@@ -1199,7 +1204,7 @@ body.sub-page {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid var(--hairline);
     padding-bottom: 12px;
 }
 
@@ -1268,7 +1273,7 @@ body.sub-page {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    border-top: 1px solid var(--hairline);
     padding-top: 14px;
     font-size: 0.8rem;
     letter-spacing: 0.1em;
@@ -1318,9 +1323,9 @@ body.sub-page {
     .nav-links { display: none; }
     .canvas-overlay {
         background: radial-gradient(circle at center, 
-            rgba(255, 255, 255, 0) 0%, 
-            rgba(255, 255, 255, 0.4) 60%, 
-            rgba(255, 255, 255, 0.85) 100%
+            rgba(250, 248, 243, 0) 0%,
+            rgba(250, 248, 243, 0.4) 60%,
+            rgba(250, 248, 243, 0.85) 100%
         );
     }
     .hero-section { justify-content: center; text-align: center; }
@@ -1347,4 +1352,102 @@ body.sub-page {
     .card-info { padding: 20px; }
     .cart-items-container, .drawer-header, .cart-summary-footer, .orders-container { padding: 20px 25px; }
     .tab-btn { font-size: 0.65rem; }
+}
+/* -------------------------------------------------------------
+ * ACABAMENTO
+ *
+ * Os detalhes que sustentam o tom da marca: fio dourado sob os
+ * títulos de seção — o mesmo gesto do selo —, versaletes abertos
+ * e um losango de separação. Tudo discreto e por cima das regras
+ * anteriores, sem reescrevê-las.
+ * ------------------------------------------------------------- */
+
+/* Fio dourado sob os títulos de seção, com o losango do selo ao centro */
+.collection-title,
+.about-title {
+    position: relative;
+    padding-bottom: 28px;
+}
+
+.collection-title::after,
+.about-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 72px;
+    height: 1px;
+    background: linear-gradient(
+        to right,
+        var(--color-gold) 0%,
+        rgba(var(--color-gold-rgb), 0.25) 100%
+    );
+}
+
+/* Em blocos centralizados o fio acompanha o texto */
+.banner-content .collection-title::after {
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(
+        to right,
+        rgba(var(--color-gold-rgb), 0) 0%,
+        var(--color-gold) 50%,
+        rgba(var(--color-gold-rgb), 0) 100%
+    );
+    width: 120px;
+}
+
+/* Versaletes: o rótulo pequeno é o que dá o tom editorial */
+.hero-tagline,
+.collection-tag,
+.perfume-family,
+.hint-text,
+.nav-item {
+    font-feature-settings: 'liga' 1, 'kern' 1;
+}
+
+.nav-item {
+    letter-spacing: var(--tracking-label);
+}
+
+/* Serifada com números alinhados e ligaduras, como em impresso */
+.hero-title,
+.collection-title,
+.about-title,
+.perfume-name,
+.loader-brand {
+    font-variant-ligatures: common-ligatures;
+    font-kerning: normal;
+}
+
+/* Preços e totais em algarismos tabulares, para alinharem em coluna */
+.cart-item-price,
+.cart-total-value,
+.order-total-price,
+.summary-line {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Seleção de texto na cor da marca */
+::selection {
+    background-color: rgba(var(--color-gold-rgb), 0.28);
+    color: var(--color-ink-deep);
+}
+
+/* Respeita quem pediu menos movimento no sistema */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .animate-reveal {
+        opacity: 1;
+        filter: none;
+        transform: none;
+    }
 }
