@@ -8,6 +8,7 @@ import { SecurityService } from '@/services/security.service'
 import { AuditService } from '@/services/audit.service'
 import { lerCorpo, respostaDeCorpoInvalido, ipDaRequisicao } from '@/lib/validacao'
 import { registrarSessao } from '@/lib/sessao'
+import { conferirCodigo, consumirCodigoBackup } from '@/lib/dois-fatores'
 
 /** Mesma janela do JWT emitido em lib/auth.ts. */
 const DURACAO_SESSAO = 60 * 60 * 24
@@ -15,6 +16,8 @@ const DURACAO_SESSAO = 60 * 60 * 24
 const loginSchema = z.object({
   email: z.string().email('Credenciais inválidas').max(254),
   senha: z.string().min(1, 'Credenciais inválidas').max(128),
+  // Só é exigido de contas com segundo fator ativo.
+  codigo: z.string().max(20).optional(),
 })
 
 export async function POST(req: Request) {
@@ -32,7 +35,7 @@ export async function POST(req: Request) {
       )
     }
 
-    const { email, senha } = await lerCorpo(req, loginSchema)
+    const { email, senha, codigo } = await lerCorpo(req, loginSchema)
 
     const user = await prisma.user.findUnique({
       where: { email },
@@ -54,6 +57,39 @@ export async function POST(req: Request) {
       // Registra o id, nunca a senha tentada.
       await AuditService.log({ acao: 'LOGIN_FALHOU', ip, endpoint: '/api/auth/login', resultado: `Senha incorreta: ${user.id}` })
       return NextResponse.json({ error: 'Credenciais inválidas' }, { status: 401 })
+    }
+
+    // Segundo fator, quando a conta tem 2FA ativo.
+    if (user.totpAtivo) {
+      if (!codigo) {
+        // 'requer2FA' diz à interface para pedir o código. Chegar aqui já
+        // significa que a senha estava correta.
+        return NextResponse.json(
+          { error: 'Informe o código do seu aplicativo autenticador.', requer2FA: true },
+          { status: 401 }
+        )
+      }
+
+      const codigoOk = conferirCodigo(codigo, user.totpSecret)
+
+      if (!codigoOk) {
+        // Pode ser um código de recuperação, de uso único.
+        const backup = consumirCodigoBackup(codigo, user.totpBackup)
+
+        if (!backup) {
+          await AuditService.log({ acao: 'LOGIN_2FA_FALHOU', ip, endpoint: '/api/auth/login', resultado: `Código inválido: ${user.id}` })
+          return NextResponse.json(
+            { error: 'Código inválido.', requer2FA: true },
+            { status: 401 }
+          )
+        }
+
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { totpBackup: backup.restantes || null },
+        })
+        await AuditService.log({ acao: 'LOGIN_2FA_BACKUP_USADO', ip, endpoint: '/api/auth/login', resultado: user.id })
+      }
     }
 
     // Gerar token

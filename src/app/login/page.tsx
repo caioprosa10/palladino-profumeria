@@ -12,6 +12,9 @@ function LoginContent() {
 
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
+  const [codigo, setCodigo] = useState('')
+  // Só aparece depois de o servidor informar que a conta tem 2FA ativo.
+  const [pede2FA, setPede2FA] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -24,12 +27,16 @@ function LoginContent() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, senha })
+        body: JSON.stringify({ email, senha, codigo: codigo || undefined })
       })
 
       const data = await res.json()
 
       if (!res.ok) {
+        // A senha estava certa, falta o segundo fator.
+        if (data.requer2FA) {
+          setPede2FA(true)
+        }
         throw new Error(data.error || 'Erro ao realizar login')
       }
 
@@ -85,6 +92,28 @@ function LoginContent() {
             </Link>
           </div>
         </div>
+
+        {pede2FA && (
+          <div>
+            <label style={{ display: 'block', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', fontWeight: 500 }}>
+              Código de verificação
+            </label>
+            <input
+              type="text"
+              inputMode="text"
+              autoComplete="one-time-code"
+              autoFocus
+              value={codigo}
+              onChange={e => setCodigo(e.target.value)}
+              required
+              style={{ width: '100%', padding: '15px', border: '1px solid #e5e7eb', borderRadius: '4px', fontSize: '1rem', outline: 'none', letterSpacing: '0.15em' }}
+              placeholder="000000"
+            />
+            <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginTop: '8px' }}>
+              Use o código do seu aplicativo autenticador, ou um dos códigos de recuperação.
+            </p>
+          </div>
+        )}
 
         <button 
           type="submit" 

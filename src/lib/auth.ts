@@ -1,3 +1,4 @@
+import crypto from 'crypto'
 import { SignJWT, jwtVerify } from 'jose'
 
 const MIN_SECRET_LENGTH = 32
@@ -36,6 +37,10 @@ export async function encrypt(payload: any) {
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
+    // Identificador único por token. Sem ele, dois logins do mesmo usuário
+    // no mesmo segundo produzem o MESMO token — iat tem granularidade de
+    // segundos —, e o registro da sessão colide na coluna tokenHash.
+    .setJti(crypto.randomUUID())
     .setExpirationTime('1d') // Expira em 1 dia
     .sign(getKey())
 }
