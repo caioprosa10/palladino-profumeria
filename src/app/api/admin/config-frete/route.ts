@@ -1,21 +1,19 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { jwtVerify } from 'jose'
 import { cookies } from 'next/headers'
+import { decrypt } from '@/lib/auth'
 
 async function isAdmin() {
-  try {
-    const cookieStore = await cookies()
-    const token = cookieStore.get('auth_token')?.value
-    if (!token) return false
-    
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET || '***REMOVIDO***')
-    const { payload } = await jwtVerify(token, secret)
-    
-    return payload.role === 'ADMIN' || payload.role === 'SUPERADMIN'
-  } catch (error) {
-    return false
-  }
+  const cookieStore = await cookies()
+  // O login grava o cookie 'session'; estas rotas liam 'auth_token',
+  // que nunca existiu, e validavam com um segredo próprio embutido.
+  const token = cookieStore.get('session')?.value
+  if (!token) return false
+
+  const payload = await decrypt(token)
+  if (!payload) return false
+
+  return payload.role === 'ADMIN' || payload.role === 'SUPERADMIN'
 }
 
 export async function GET() {

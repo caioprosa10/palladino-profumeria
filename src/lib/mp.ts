@@ -1,16 +1,16 @@
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 
-// MercadoPagoConfig expects an access token.
-// The access token MUST NOT be exposed to the client side.
-const accessToken = process.env.MP_ACCESS_TOKEN || '***REMOVIDO-ROTACIONAR-NO-MERCADO-PAGO***';
+// O access token dá acesso total à conta de cobrança e nunca pode ser
+// exposto ao cliente nem embutido no código — este arquivo é versionado.
+const accessToken = process.env.MP_ACCESS_TOKEN;
 
 if (!accessToken) {
-  console.warn('⚠️ AVISO DE SEGURANÇA: MP_ACCESS_TOKEN não configurado nas variáveis de ambiente. Backend indisponível para cobranças reais.');
+  console.warn('⚠️ MP_ACCESS_TOKEN não configurado. Cobranças reais indisponíveis.');
 }
 
 // Configuração estrita do SDK do Mercado Pago
 export const mpClient = new MercadoPagoConfig({ 
-  accessToken, 
+  accessToken: accessToken ?? '', 
   options: { 
     timeout: 10000
   } 
