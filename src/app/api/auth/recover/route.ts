@@ -1,10 +1,16 @@
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
 import { SecurityService } from '@/services/security.service'
 import { prisma } from '@/lib/prisma'
+import { lerCorpo, respostaDeCorpoInvalido, ipDaRequisicao } from '@/lib/validacao'
+
+const recoverSchema = z.object({
+  email: z.string().email('E-mail inválido').max(254),
+})
 
 export async function POST(req: Request) {
   try {
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1'
+    const ip = ipDaRequisicao(req)
     if (await SecurityService.checkRateLimit(ip, '/api/auth/recover', 5)) {
       return NextResponse.json(
         { error: 'Muitas requisições. Aguarde alguns minutos e tente novamente.' },
@@ -12,11 +18,7 @@ export async function POST(req: Request) {
       )
     }
 
-    const { email } = await req.json()
-
-    if (!email) {
-      return NextResponse.json({ error: 'E-mail é obrigatório' }, { status: 400 })
-    }
+    const { email } = await lerCorpo(req, recoverSchema)
 
     const user = await prisma.user.findUnique({
       where: { email },
@@ -32,6 +34,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ message: 'Se o e-mail existir, você receberá as instruções em breve.' })
   } catch (error) {
+    const r = respostaDeCorpoInvalido(error)
+    if (r) return r
+    console.error('Erro na recuperação de senha:', error)
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 })
   }
 }

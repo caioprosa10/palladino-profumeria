@@ -1,11 +1,18 @@
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
 import { SecurityService } from '@/services/security.service'
+import { lerCorpo, respostaDeCorpoInvalido, ipDaRequisicao } from '@/lib/validacao'
+
+// As preferências são rótulos curtos escolhidos na interface do chatbot.
+const chatSchema = z.object({
+  preferences: z.record(z.string().max(40), z.string().max(80)).optional(),
+})
 import { prisma } from '@/lib/prisma'
 import { RecommendationEngine } from '@/lib/chatbot/engine'
 
 export async function POST(req: Request) {
   try {
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1'
+    const ip = ipDaRequisicao(req)
     if (await SecurityService.checkRateLimit(ip, '/api/chat', 30)) {
       return NextResponse.json(
         { error: 'Muitas requisições. Aguarde alguns minutos e tente novamente.' },
@@ -13,8 +20,7 @@ export async function POST(req: Request) {
       )
     }
 
-    const body = await req.json()
-    const { preferences } = body
+    const { preferences } = await lerCorpo(req, chatSchema)
     
     // Buscar todos os produtos disponíveis no banco
     const activeProducts = await prisma.produto.findMany({
@@ -38,6 +44,8 @@ export async function POST(req: Request) {
     return NextResponse.json(engineResult)
 
   } catch (error) {
+    const r = respostaDeCorpoInvalido(error)
+    if (r) return r
     console.error('[Chatbot API] Error:', error)
     return NextResponse.json({ error: 'Erro ao buscar recomendações.' }, { status: 500 })
   }

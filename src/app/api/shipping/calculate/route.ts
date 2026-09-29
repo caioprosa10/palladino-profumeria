@@ -1,12 +1,27 @@
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
 import { SecurityService } from '@/services/security.service'
+import { lerCorpo, respostaDeCorpoInvalido, ipDaRequisicao } from '@/lib/validacao'
+
+const freteSchema = z.object({
+  cepDestino: z.string().regex(/^\d{5}-?\d{3}$/, 'CEP inválido'),
+  cart: z
+    .array(
+      z.object({
+        produto: z.object({ id: z.string().min(1).max(64) }).passthrough(),
+        quantidade: z.number().int().min(1).max(99),
+      })
+    )
+    .min(1, 'Carrinho vazio')
+    .max(50),
+})
 import { shippingService } from '@/services/MelhorEnvioService'
 
 export async function POST(request: Request) {
   try {
     // Cada chamada consome cota da API do Melhor Envio e do ViaCEP:
     // sem limite, um terceiro pode esgotar o serviço de frete da loja.
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1'
+    const ip = ipDaRequisicao(request)
     if (await SecurityService.checkRateLimit(ip, '/api/shipping/calculate', 20)) {
       return NextResponse.json(
         { error: 'Muitas consultas de frete. Aguarde alguns minutos.' },
@@ -14,11 +29,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const { cepDestino, cart } = await request.json()
-
-    if (!cepDestino || !cart || cart.length === 0) {
-      return NextResponse.json({ error: 'CEP de destino e carrinho são obrigatórios.' }, { status: 400 })
-    }
+    const { cepDestino, cart } = await lerCorpo(request, freteSchema)
 
     const produtos = cart.map((item: any) => ({
       id: item.produto.id,
@@ -37,6 +48,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json(options)
   } catch (error: any) {
+    const r = respostaDeCorpoInvalido(error)
+    if (r) return r
     console.error('Erro na rota de frete:', error)
     
     // Tratamento amigável

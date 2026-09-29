@@ -7,24 +7,21 @@ export async function GET() {
   if (auth.response) return auth.response
 
   try {
-    let config = await prisma.configuracaoFrete.findFirst()
-    if (!config) {
-      // Cria config padrão vazia se não existir
-      config = await prisma.configuracaoFrete.create({
-        data: {}
-      })
-    }
+    // Somente leitura: um GET não deve gravar no banco. Quando ainda não
+    // há configuração, devolvemos os valores padrão; o registro é criado
+    // no PUT, quando o administrador salva de fato.
+    const config = await prisma.configuracaoFrete.findFirst()
 
     // Máscara
     const mascara = (str?: string | null) => str ? `${str.substring(0, 10)}...${str.substring(str.length - 10)}` : ''
 
     return NextResponse.json({
-      id: config.id,
-      tokenMasked: mascara(config.token),
-      clientId: config.clientId,
-      clientSecretMasked: mascara(config.clientSecret),
-      ambiente: config.ambiente,
-      cepOrigem: config.cepOrigem
+      id: config?.id ?? null,
+      tokenMasked: mascara(config?.token),
+      clientId: config?.clientId ?? null,
+      clientSecretMasked: mascara(config?.clientSecret),
+      ambiente: config?.ambiente ?? 'production',
+      cepOrigem: config?.cepOrigem ?? ''
     })
   } catch (error) {
     return NextResponse.json({ error: 'Erro ao buscar configuração' }, { status: 500 })

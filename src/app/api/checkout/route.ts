@@ -6,6 +6,23 @@ import { decrypt } from '@/lib/auth';
 import { v4 as uuidv4 } from 'uuid';
 import { shippingService } from '@/services/MelhorEnvioService';
 import { SecurityService } from '@/services/security.service';
+import { z } from 'zod';
+import { lerCorpo, respostaDeCorpoInvalido, ipDaRequisicao } from '@/lib/validacao';
+
+// Só id e quantidade importam: preço, nome e frete vêm do servidor.
+const checkoutSchema = z.object({
+  cart: z
+    .array(
+      z.object({
+        produto: z.object({ id: z.string().min(1).max(64) }).passthrough(),
+        quantidade: z.number().int().min(1).max(99),
+      })
+    )
+    .min(1, 'Carrinho vazio.')
+    .max(50),
+  cepDestino: z.string().max(9).optional(),
+  freteId: z.number().int().min(0).max(1_000_000).optional(),
+});
 
 const client = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN as string });
 
@@ -44,7 +61,7 @@ function lerItensDoCarrinho(cart: unknown) {
 export async function POST(request: Request) {
   try {
     // Cada tentativa grava um pedido e cria uma preferência no Mercado Pago.
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
+    const ip = ipDaRequisicao(request);
     if (await SecurityService.checkRateLimit(ip, '/api/checkout', 10)) {
       return NextResponse.json(
         { error: 'Muitas tentativas de pagamento. Aguarde alguns minutos.' },
@@ -67,8 +84,8 @@ export async function POST(request: Request) {
 
     const userId = session.id as string;
 
-    const body = await request.json();
-    const quantidadePorProduto = lerItensDoCarrinho(body?.cart);
+    const body = await lerCorpo(request, checkoutSchema);
+    const quantidadePorProduto = lerItensDoCarrinho(body.cart);
 
     const host = request.headers.get('host') || 'localhost:3000';
     const protocol = host.includes('localhost') ? 'http' : 'https';
@@ -251,6 +268,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ url: urlDePagamento });
 
   } catch (error: any) {
+    const r = respostaDeCorpoInvalido(error);
+    if (r) return r;
     console.error('--- ERRO AO CRIAR PREFERÊNCIA ---', error);
     return NextResponse.json(
       { error: 'Falha ao processar o pedido. Tente novamente mais tarde.' },
