@@ -7,7 +7,7 @@ import { useState, useEffect } from "react"
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { cart, selectedFreight, selectedFreightName } = useCartStore()
+  const { cart, selectedFreight, selectedFreightName, selectedFreightId, cepDestino } = useCartStore()
   const [mounted, setMounted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [paymentError, setPaymentError] = useState('')
@@ -44,7 +44,10 @@ export default function CheckoutPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           cart,
-          frete: selectedFreight,
+          // O servidor recalcula o frete a partir destes dois campos;
+          // o valor exibido ao cliente não é aceito como verdade.
+          cepDestino,
+          freteId: selectedFreightId,
         })
       })
       

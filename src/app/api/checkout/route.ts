@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { cookies } from 'next/headers';
 import { decrypt } from '@/lib/auth';
 import { v4 as uuidv4 } from 'uuid';
+import { shippingService } from '@/services/MelhorEnvioService';
 
 const client = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN as string });
 
@@ -109,8 +110,64 @@ export async function POST(request: Request) {
       });
     }
 
-    const valorFrete = Number(body?.frete);
-    const freteFinal = Number.isFinite(valorFrete) && valorFrete > 0 ? valorFrete : 0;
+    // 3. Recalcula o frete no servidor. O cliente informa apenas o CEP e o
+    // serviço escolhido; o valor que ele viu na tela não é aceito como verdade,
+    // caso contrário bastaria enviar frete = 0 para não pagar o envio.
+    const cepDestino = String(body?.cepDestino ?? '').replace(/\D/g, '');
+    const freteId = Number(body?.freteId);
+
+    let freteFinal = 0;
+
+    if (freteId > 0) {
+      if (cepDestino.length !== 8) {
+        return NextResponse.json(
+          { error: 'Informe um CEP válido e recalcule o frete.' },
+          { status: 400 }
+        );
+      }
+
+      let opcoes;
+      try {
+        opcoes = await shippingService.calculate({
+          cepDestino,
+          produtos: produtos.map((produto) => ({
+            id: produto.id,
+            width: 15,
+            height: 15,
+            length: 15,
+            weight: 0.5,
+            insurance_value: Number(produto.preco),
+            quantity: quantidadePorProduto.get(produto.id)!,
+          })),
+        });
+      } catch {
+        // Sem cotação confiável não há como cobrar o envio: é preferível
+        // interromper a compra a cobrar um valor que o cliente escolheu.
+        return NextResponse.json(
+          { error: 'Não foi possível confirmar o valor do frete. Recalcule e tente novamente.' },
+          { status: 503 }
+        );
+      }
+
+      const escolhida = opcoes.find((opcao) => Number(opcao.id) === freteId);
+
+      if (!escolhida) {
+        return NextResponse.json(
+          { error: 'A opção de frete escolhida não está mais disponível. Recalcule o frete.' },
+          { status: 409 }
+        );
+      }
+
+      const precoFrete = Number(escolhida.price);
+      if (!Number.isFinite(precoFrete) || precoFrete < 0) {
+        return NextResponse.json(
+          { error: 'Não foi possível confirmar o valor do frete. Recalcule e tente novamente.' },
+          { status: 503 }
+        );
+      }
+
+      freteFinal = precoFrete;
+    }
 
     if (freteFinal > 0) {
       items.push({
@@ -124,7 +181,7 @@ export async function POST(request: Request) {
 
     const total = subtotal + freteFinal;
 
-    // 3. Criar Pedido no Banco de Dados ANTES de chamar o Mercado Pago
+    // 4. Criar Pedido no Banco de Dados ANTES de chamar o Mercado Pago
     // Usamos Transaction para garantir integridade
     const novoPedido = await prisma.$transaction(async (tx) => {
       const pedido = await tx.pedido.create({
@@ -159,7 +216,7 @@ export async function POST(request: Request) {
       return pedido;
     });
 
-    // 4. Criar a Preference no Mercado Pago, referenciando o ID do nosso banco
+    // 5. Criar a Preference no Mercado Pago, referenciando o ID do nosso banco
     const preferenceData: any = {
       body: {
         items: items,

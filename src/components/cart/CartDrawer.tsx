@@ -10,7 +10,7 @@ export function CartDrawer() {
     isDrawerOpen, closeDrawer, 
     cart, orders, activeTab, setTab, 
     removeFromCart, selectedFreight, selectedFreightName, setFreight, clearCart, addOrder,
-    shippingOptions, setShippingOptions
+    shippingOptions, setShippingOptions, setCepDestino
   } = useCartStore()
 
   const [cep, setCep] = useState('')
@@ -61,6 +61,8 @@ export function CartDrawer() {
       }
 
       setShippingOptions(data)
+      // O servidor revalida o frete com este CEP no checkout.
+      setCepDestino(cep)
       setIsFreightExpanded(true)
     } catch (error) {
       console.error('Erro na requisição de frete', error)
@@ -201,7 +203,7 @@ export function CartDrawer() {
                             name="freight" 
                             value={option.price}
                             checked={selectedFreightName === option.name}
-                            onChange={() => setFreight(Number(option.price), option.name, option.custom_delivery_time)} 
+                            onChange={() => setFreight(Number(option.price), option.name, option.custom_delivery_time, option.id)} 
                           /> {option.name} <span style={{ fontSize: '0.65rem', opacity: 0.8 }}>({option.custom_delivery_time} dias úteis)</span>
                         </span>
                         <strong>R$ {Number(option.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>

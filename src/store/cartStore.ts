@@ -41,6 +41,9 @@ interface CartState {
   selectedFreight: number
   selectedFreightName: string
   selectedDeliveryTime: number
+  /** Serviço escolhido e CEP usados pelo servidor para recalcular o frete. */
+  selectedFreightId: number
+  cepDestino: string
   shippingOptions: FreightOption[]
   
   
@@ -52,7 +55,8 @@ interface CartState {
   removeFromCart: (itemId: string) => void
   updateQuantity: (itemId: string, qtde: number) => void
   
-  setFreight: (value: number, name?: string, time?: number) => void
+  setFreight: (value: number, name?: string, time?: number, id?: number) => void
+  setCepDestino: (cep: string) => void
   setShippingOptions: (options: FreightOption[]) => void
   clearCart: () => void
   addOrder: (order: Order) => void
@@ -68,6 +72,8 @@ export const useCartStore = create<CartState>()(
       selectedFreight: 0,
       selectedFreightName: '',
       selectedDeliveryTime: 0,
+      selectedFreightId: 0,
+      cepDestino: '',
       shippingOptions: [],
       
       openDrawer: () => set({ isDrawerOpen: true }),
@@ -104,11 +110,13 @@ export const useCartStore = create<CartState>()(
         )
       })),
       
-      setFreight: (value, name = '', time = 0) => set({ selectedFreight: value, selectedFreightName: name, selectedDeliveryTime: time }),
+      setFreight: (value, name = '', time = 0, id = 0) => set({ selectedFreight: value, selectedFreightName: name, selectedDeliveryTime: time, selectedFreightId: id }),
+
+      setCepDestino: (cep) => set({ cepDestino: cep.replace(/\D/g, '') }),
       
       setShippingOptions: (options) => set({ shippingOptions: options }),
       
-      clearCart: () => set({ cart: [], selectedFreight: 0, selectedFreightName: '', selectedDeliveryTime: 0, shippingOptions: [] }),
+      clearCart: () => set({ cart: [], selectedFreight: 0, selectedFreightName: '', selectedDeliveryTime: 0, selectedFreightId: 0, cepDestino: '', shippingOptions: [] }),
       
       addOrder: (order) => set((state) => ({
         orders: [order, ...state.orders]
