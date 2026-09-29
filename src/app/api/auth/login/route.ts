@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import bcrypt from 'bcryptjs'
+import { conferirSenha } from '@/lib/password'
 import { encrypt } from '@/lib/auth'
 import { cookies } from 'next/headers'
 import { SecurityService } from '@/services/security.service'
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Conta desativada. Entre em contato com o suporte.' }, { status: 403 })
     }
 
-    const passwordMatch = await bcrypt.compare(senha, user.senha)
+    const passwordMatch = await conferirSenha(senha, user.senha)
 
     if (!passwordMatch) {
       return NextResponse.json({ error: 'Credenciais inválidas' }, { status: 401 })

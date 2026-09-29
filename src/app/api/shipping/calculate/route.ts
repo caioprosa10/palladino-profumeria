@@ -1,8 +1,19 @@
 import { NextResponse } from 'next/server'
+import { SecurityService } from '@/services/security.service'
 import { shippingService } from '@/services/MelhorEnvioService'
 
 export async function POST(request: Request) {
   try {
+    // Cada chamada consome cota da API do Melhor Envio e do ViaCEP:
+    // sem limite, um terceiro pode esgotar o serviço de frete da loja.
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1'
+    if (await SecurityService.checkRateLimit(ip, '/api/shipping/calculate', 20)) {
+      return NextResponse.json(
+        { error: 'Muitas consultas de frete. Aguarde alguns minutos.' },
+        { status: 429 }
+      )
+    }
+
     const { cepDestino, cart } = await request.json()
 
     if (!cepDestino || !cart || cart.length === 0) {

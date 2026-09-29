@@ -1,9 +1,18 @@
 import { NextResponse } from 'next/server'
+import { SecurityService } from '@/services/security.service'
 import { prisma } from '@/lib/prisma'
 import { RecommendationEngine } from '@/lib/chatbot/engine'
 
 export async function POST(req: Request) {
   try {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1'
+    if (await SecurityService.checkRateLimit(ip, '/api/chat', 30)) {
+      return NextResponse.json(
+        { error: 'Muitas requisições. Aguarde alguns minutos e tente novamente.' },
+        { status: 429 }
+      )
+    }
+
     const body = await req.json()
     const { preferences } = body
     

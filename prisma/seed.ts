@@ -10,7 +10,7 @@ async function main() {
   if (!adminPassword) {
     throw new Error('Defina ADMIN_PASSWORD no .env antes de rodar o seed.')
   }
-  const hashedPassword = await bcrypt.hash(adminPassword, 10)
+  const hashedPassword = await bcrypt.hash(adminPassword, 12)
 
   await prisma.user.upsert({
     where: { email: adminEmail },

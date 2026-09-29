@@ -1,8 +1,17 @@
 import { NextResponse } from 'next/server'
+import { SecurityService } from '@/services/security.service'
 import { prisma } from '@/lib/prisma'
 
 export async function POST(req: Request) {
   try {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1'
+    if (await SecurityService.checkRateLimit(ip, '/api/auth/recover', 5)) {
+      return NextResponse.json(
+        { error: 'Muitas requisições. Aguarde alguns minutos e tente novamente.' },
+        { status: 429 }
+      )
+    }
+
     const { email } = await req.json()
 
     if (!email) {

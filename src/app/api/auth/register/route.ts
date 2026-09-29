@@ -1,18 +1,27 @@
 import { NextResponse } from 'next/server'
+import { SecurityService } from '@/services/security.service'
 import { prisma } from '@/lib/prisma'
-import bcrypt from 'bcryptjs'
 import { z } from 'zod'
+import { hashSenha, senhaSchema } from '@/lib/password'
 
 const registerSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
   email: z.string().email('E-mail inválido'),
-  senha: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
+  senha: senhaSchema,
   cpf: z.string().optional(),
   telefone: z.string().optional(),
 })
 
 export async function POST(req: Request) {
   try {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1'
+    if (await SecurityService.checkRateLimit(ip, '/api/auth/register', 5)) {
+      return NextResponse.json(
+        { error: 'Muitas requisições. Aguarde alguns minutos e tente novamente.' },
+        { status: 429 }
+      )
+    }
+
     const body = await req.json()
     const { nome, email, senha, cpf, telefone } = registerSchema.parse(body)
 
@@ -29,7 +38,7 @@ export async function POST(req: Request) {
     }
 
     // Hash da senha
-    const hashedPassword = await bcrypt.hash(senha, 10)
+    const hashedPassword = await hashSenha(senha)
 
     // Criação do usuário
     const user = await prisma.user.create({

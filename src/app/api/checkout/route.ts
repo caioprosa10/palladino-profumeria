@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 import { decrypt } from '@/lib/auth';
 import { v4 as uuidv4 } from 'uuid';
 import { shippingService } from '@/services/MelhorEnvioService';
+import { SecurityService } from '@/services/security.service';
 
 const client = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN as string });
 
@@ -42,6 +43,15 @@ function lerItensDoCarrinho(cart: unknown) {
 
 export async function POST(request: Request) {
   try {
+    // Cada tentativa grava um pedido e cria uma preferência no Mercado Pago.
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
+    if (await SecurityService.checkRateLimit(ip, '/api/checkout', 10)) {
+      return NextResponse.json(
+        { error: 'Muitas tentativas de pagamento. Aguarde alguns minutos.' },
+        { status: 429 }
+      );
+    }
+
     // 1. Verificação de Autenticação (Apenas usuários logados podem comprar)
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get('session')?.value;
