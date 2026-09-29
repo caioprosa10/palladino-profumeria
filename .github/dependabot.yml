@@ -1,0 +1,24 @@
+# Atualizações automáticas de dependências.
+#
+# O projeto lida com pagamento e dados de clientes, então vulnerabilidade
+# em dependência é risco direto. O Dependabot abre PR quando sai correção.
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    # Agrupa as atualizações de rotina num PR só, para que os avisos de
+    # segurança não se perdam no meio do ruído.
+    groups:
+      dependencias-de-rotina:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    labels: ["dependencias"]
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly

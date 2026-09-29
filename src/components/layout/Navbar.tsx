@@ -48,6 +48,7 @@ export function Navbar() {
         <Link href="/categoria/body-splash" className="nav-item">Body Splash</Link>
         <Link href="/categoria/nicho" className="nav-item">Nicho</Link>
         <Link href="/sobre" className="nav-item">Sobre</Link>
+        <Link href="/privacidade" className="nav-item">Privacidade</Link>
       </nav>
       <div className="header-actions">
         <button id="search-btn" aria-label="Buscar" className="icon-btn" onClick={() => setIsSearchOpen(!isSearchOpen)}>

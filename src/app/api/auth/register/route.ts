@@ -1,21 +1,25 @@
 import { NextResponse } from 'next/server'
 import { SecurityService } from '@/services/security.service'
+import { ipDaRequisicao } from '@/lib/validacao'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { hashSenha, senhaSchema } from '@/lib/password'
 import { cifrar } from '@/lib/cripto'
+import { AuditService } from '@/services/audit.service'
 
 const registerSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
   email: z.string().email('E-mail inválido'),
   senha: senhaSchema,
-  cpf: z.string().optional(),
-  telefone: z.string().optional(),
+  cpf: z.string().max(20).optional(),
+  telefone: z.string().max(20).optional(),
+  // Campo-isca: invisível no formulário, então só um robô o preenche.
+  website: z.string().max(200).optional(),
 })
 
 export async function POST(req: Request) {
   try {
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1'
+    const ip = ipDaRequisicao(req)
     if (await SecurityService.checkRateLimit(ip, '/api/auth/register', 5)) {
       return NextResponse.json(
         { error: 'Muitas requisições. Aguarde alguns minutos e tente novamente.' },
@@ -24,7 +28,14 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json()
-    const { nome, email, senha, cpf, telefone } = registerSchema.parse(body)
+    const { nome, email, senha, cpf, telefone, website } = registerSchema.parse(body)
+
+    // Responde como se tivesse dado certo: dizer "você é um robô" ensina
+    // o robô a contornar a isca.
+    if (website) {
+      await AuditService.log({ acao: 'CADASTRO_HONEYPOT', ip, endpoint: '/api/auth/register', resultado: 'Campo-isca preenchido' })
+      return NextResponse.json({ message: 'Usuário cadastrado com sucesso' }, { status: 201 })
+    }
 
     // Verifica se e-mail já existe
     const existingUser = await prisma.user.findUnique({

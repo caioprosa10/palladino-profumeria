@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Cormorant_Garamond, Montserrat } from 'next/font/google'
 import { CartDrawer } from '@/components/cart/CartDrawer'
 import { Chatbot } from '@/components/layout/Chatbot'
+import { AvisoCookies } from '@/components/layout/AvisoCookies'
 import './globals.css'
 
 const cormorant = Cormorant_Garamond({ 
@@ -33,6 +34,7 @@ export default function RootLayout({
         {children}
         <CartDrawer />
         <Chatbot />
+        <AvisoCookies />
       </body>
     </html>
   )

@@ -15,6 +15,8 @@ function CadastroContent() {
   const [telefone, setTelefone] = useState('')
   const [cpf, setCpf] = useState('')
   const [senha, setSenha] = useState('')
+  // Campo-isca contra robôs: fica invisível, então pessoa nenhuma o preenche.
+  const [website, setWebsite] = useState('')
   const [confirmaSenha, setConfirmaSenha] = useState('')
   
   const [loading, setLoading] = useState(false)
@@ -35,7 +37,7 @@ function CadastroContent() {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome, email, telefone, cpf, senha })
+        body: JSON.stringify({ nome, email, telefone, cpf, senha, website })
       })
 
       const data = await res.json()
@@ -82,6 +84,20 @@ function CadastroContent() {
       )}
 
       <form onSubmit={handleCadastro} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {/* Isca para robôs. Escondido da tela e dos leitores de tela, e
+            fora da ordem de tabulação, para não atrapalhar quem usa o site. */}
+        <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', width: '1px', height: '1px', overflow: 'hidden' }}>
+          <label htmlFor="website">Website</label>
+          <input
+            id="website"
+            name="website"
+            type="text"
+            tabIndex={-1}
+            autoComplete="off"
+            value={website}
+            onChange={e => setWebsite(e.target.value)}
+          />
+        </div>
         
         <div>
           <label style={{ display: 'block', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', fontWeight: 500 }}>Nome Completo *</label>
