@@ -6,9 +6,11 @@ import { lerCorpo, respostaDeCorpoInvalido, ipDaRequisicao } from '@/lib/validac
 import { gerarToken, hashToken } from '@/lib/cripto'
 import { EmailService } from '@/services/email.service'
 import { AuditService } from '@/services/audit.service'
+import { verificar as verificarTurnstile, mensagemDeErro } from '@/lib/turnstile'
 
 const recoverSchema = z.object({
   email: z.string().email('E-mail inválido').max(254),
+  turnstileToken: z.string().max(4096).optional(),
 })
 
 /** Janela curta: o link é um caminho de acesso à conta. */
@@ -24,7 +26,15 @@ export async function POST(req: Request) {
       )
     }
 
-    const { email } = await lerCorpo(req, recoverSchema)
+    const { email, turnstileToken } = await lerCorpo(req, recoverSchema)
+
+    // Também fail-closed: sem isso o endpoint serve para disparar e-mails
+    // em volume contra endereços de terceiros.
+    const captcha = await verificarTurnstile(turnstileToken, ip, { failClosed: true })
+    const erroCaptcha = mensagemDeErro(captcha)
+    if (erroCaptcha) {
+      return NextResponse.json({ error: erroCaptcha }, { status: 400 })
+    }
 
     const user = await prisma.user.findUnique({
       where: { email },

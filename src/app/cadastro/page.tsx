@@ -3,6 +3,7 @@
 import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { Turnstile } from '@/components/seguranca/Turnstile'
 import { Navbar } from '@/components/layout/Navbar'
 
 function CadastroContent() {
@@ -17,6 +18,8 @@ function CadastroContent() {
   const [senha, setSenha] = useState('')
   // Campo-isca contra robôs: fica invisível, então pessoa nenhuma o preenche.
   const [website, setWebsite] = useState('')
+  const [captcha, setCaptcha] = useState('')
+  const siteKey = process.env.TURNSTILE_SITE_KEY_PUBLICA || null
   const [confirmaSenha, setConfirmaSenha] = useState('')
   
   const [loading, setLoading] = useState(false)
@@ -37,7 +40,7 @@ function CadastroContent() {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome, email, telefone, cpf, senha, website })
+        body: JSON.stringify({ nome, email, telefone, cpf, senha, website, turnstileToken: captcha || undefined })
       })
 
       const data = await res.json()
@@ -168,6 +171,8 @@ function CadastroContent() {
             />
           </div>
         </div>
+
+        <Turnstile siteKey={siteKey} onToken={setCaptcha} />
 
         <button 
           type="submit" 

@@ -37,6 +37,21 @@ export class SecurityService {
   }
 
   /**
+   * Quantas tentativas este IP fez neste endpoint na janela atual.
+   *
+   * Usado para decidir quando exigir o captcha no login: as primeiras
+   * tentativas passam direto, e o desafio só aparece quando o padrão
+   * começa a parecer automatizado.
+   */
+  static async contarTentativas(ip: string, endpoint: string): Promise<number> {
+    const windowStart = new Date(Date.now() - 15 * 60 * 1000);
+
+    return prisma.rateLimit.count({
+      where: { ip, endpoint, timestamp: { gte: windowStart } }
+    });
+  }
+
+  /**
    * Limpa rate limits antigos para evitar inchaço do banco
    */
   static async cleanOldRateLimits() {

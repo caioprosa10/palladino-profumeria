@@ -3,6 +3,7 @@
 import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { Turnstile } from '@/components/seguranca/Turnstile'
 import { Navbar } from '@/components/layout/Navbar'
 
 function LoginContent() {
@@ -15,6 +16,10 @@ function LoginContent() {
   const [codigo, setCodigo] = useState('')
   // Só aparece depois de o servidor informar que a conta tem 2FA ativo.
   const [pede2FA, setPede2FA] = useState(false)
+  const [captcha, setCaptcha] = useState('')
+  // Ligado pelo servidor após algumas tentativas do mesmo IP.
+  const [pedeCaptcha, setPedeCaptcha] = useState(false)
+  const siteKey = process.env.TURNSTILE_SITE_KEY_PUBLICA || null
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -27,7 +32,7 @@ function LoginContent() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, senha, codigo: codigo || undefined })
+        body: JSON.stringify({ email, senha, codigo: codigo || undefined, turnstileToken: captcha || undefined })
       })
 
       const data = await res.json()
@@ -36,6 +41,9 @@ function LoginContent() {
         // A senha estava certa, falta o segundo fator.
         if (data.requer2FA) {
           setPede2FA(true)
+        }
+        if (data.requerCaptcha) {
+          setPedeCaptcha(true)
         }
         throw new Error(data.error || 'Erro ao realizar login')
       }
@@ -92,6 +100,10 @@ function LoginContent() {
             </Link>
           </div>
         </div>
+
+        {pedeCaptcha && siteKey && (
+          <Turnstile siteKey={siteKey} onToken={setCaptcha} />
+        )}
 
         {pede2FA && (
           <div>

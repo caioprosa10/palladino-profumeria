@@ -3,6 +3,17 @@ import type { NextConfig } from "next";
 const isDev = process.env.NODE_ENV === "development";
 
 /**
+ * Turnstile precisa carregar script e abrir um iframe de challenge no
+ * domínio da Cloudflare. As entradas só são adicionadas quando a
+ * integração está configurada — sem a chave, o CSP continua fechado.
+ *
+ * Como headers() é resolvido no build, TURNSTILE_SITE_KEY precisa existir
+ * no ambiente de build, não só em execução.
+ */
+const turnstileAtivo = Boolean(process.env.TURNSTILE_SITE_KEY);
+const cfChallenges = "https://challenges.cloudflare.com";
+
+/**
  * Content Security Policy.
  *
  * script-src mantém 'unsafe-inline' porque o Next injeta scripts de
@@ -17,7 +28,7 @@ const isDev = process.env.NODE_ENV === "development";
  */
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}${turnstileAtivo ? ` ${cfChallenges}` : ""}`,
   "style-src 'self' 'unsafe-inline'",
   // Só imagens da própria origem: o catálogo é servido de /public.
   "img-src 'self' data: blob:",
@@ -25,9 +36,10 @@ const csp = [
   // Em desenvolvimento o hot reload do Next abre um WebSocket; sem ws:
   // o CSP o derruba e o cliente de HMR passa a escrever num stream fechado.
   // Produção continua restrita à própria origem.
-  `connect-src 'self'${isDev ? " ws: wss:" : ""}`,
-  // O pagamento é redirecionamento de página, não iframe.
-  "frame-src 'none'",
+  `connect-src 'self'${isDev ? " ws: wss:" : ""}${turnstileAtivo ? ` ${cfChallenges}` : ""}`,
+  // O pagamento é redirecionamento de página, não iframe. O único iframe
+  // legítimo é o challenge do Turnstile, quando ativo.
+  turnstileAtivo ? `frame-src ${cfChallenges}` : "frame-src 'none'",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -57,6 +69,14 @@ const nextConfig: NextConfig = {
 
   // Não anunciar a stack para quem sonda o servidor.
   poweredByHeader: false,
+
+  // A site key do Turnstile é pública por natureza — vai no HTML de
+  // qualquer forma. Injetar por aqui evita pedir que a mesma chave seja
+  // configurada duas vezes, com e sem o prefixo NEXT_PUBLIC_.
+  // A secret NUNCA entra aqui: ela só é usada no servidor.
+  env: {
+    TURNSTILE_SITE_KEY_PUBLICA: process.env.TURNSTILE_SITE_KEY ?? '',
+  },
 
   async headers() {
     return [

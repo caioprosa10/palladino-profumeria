@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Navbar } from '@/components/layout/Navbar'
+import { Turnstile } from '@/components/seguranca/Turnstile'
 import Link from 'next/link'
 
 export default function RecuperarSenhaPage() {
@@ -9,6 +10,8 @@ export default function RecuperarSenhaPage() {
   const [mensagem, setMensagem] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [captcha, setCaptcha] = useState('')
+  const siteKey = process.env.TURNSTILE_SITE_KEY_PUBLICA || null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -20,7 +23,7 @@ export default function RecuperarSenhaPage() {
       const res = await fetch('/api/auth/recover', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, turnstileToken: captcha || undefined }),
       })
 
       const data = await res.json()
@@ -57,6 +60,8 @@ export default function RecuperarSenhaPage() {
               required
               style={{ padding: '15px', border: '1px solid rgba(0,0,0,0.1)', outline: 'none', backgroundColor: 'transparent' }} 
             />
+        <Turnstile siteKey={siteKey} onToken={setCaptcha} />
+
             <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: '100%', opacity: loading ? 0.7 : 1 }}>
               {loading ? 'Enviando...' : 'Enviar Instruções'}
             </button>
