@@ -1451,3 +1451,239 @@ body.sub-page {
         transform: none;
     }
 }
+
+/* -------------------------------------------------------------
+ * PÁGINAS DE AUTENTICAÇÃO
+ *
+ * Estes estilos eram atributos `style` inline no JSX. Foram migrados
+ * para classes porque CSP estrito bloqueia estilo inline, e nonce não
+ * cobre atributo `style` — só script. São as páginas que recebem
+ * credencial, onde um XSS custa mais caro.
+ *
+ * Os quatro `style` que restam nessas páginas dependem de valor em
+ * tempo de execução (opacidade durante o envio) e não podem virar
+ * classe sem perder o comportamento.
+ * ------------------------------------------------------------- */
+
+.auth-wrap {
+    max-width: 400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.auth-head {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.auth-title {
+    font-family: var(--font-serif);
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.auth-sub {
+    color: var(--color-text-secondary);
+}
+
+.auth-alert {
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.auth-alert-erro {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.auth-alert-ok {
+    background-color: #dcfce7;
+    color: #15803d;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.auth-label {
+    display: block;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.auth-input {
+    width: 100%;
+    padding: 15px;
+    border: 1px solid var(--hairline);
+    border-radius: 4px;
+    font-size: 1rem;
+    outline: none;
+    background-color: transparent;
+    color: var(--color-text-primary);
+}
+
+.auth-input:focus-visible {
+    border-color: var(--color-gold);
+    outline: 2px solid var(--color-gold);
+    outline-offset: 1px;
+}
+
+/* Campo de código: dígitos espaçados, para conferir sem esforço. */
+.auth-input-codigo {
+    letter-spacing: 0.15em;
+}
+
+.auth-dica {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    margin-top: 8px;
+}
+
+.auth-link-linha {
+    text-align: right;
+    margin-top: 8px;
+}
+
+.auth-link {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    text-decoration: underline;
+}
+
+.auth-rodape {
+    margin-top: 30px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+}
+
+.auth-rodape a {
+    color: var(--color-gold-dark);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.auth-botao {
+    width: 100%;
+}
+
+/* Cartão usado por recuperar-senha e redefinir-senha. */
+.auth-card-pagina {
+    padding: 120px 8%;
+    min-height: 80vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--color-bg-alt);
+}
+
+.auth-card {
+    background-color: var(--color-surface);
+    padding: 50px;
+    width: 100%;
+    max-width: 450px;
+    border: 1px solid var(--hairline);
+    box-shadow: var(--shadow-soft);
+}
+
+.auth-card .auth-title {
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    text-align: center;
+}
+
+.auth-card .auth-sub {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 0.85rem;
+}
+
+/* Isca do honeypot: fora da tela, fora do fluxo, fora da tabulação. */
+.auth-honeypot {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+/* Restantes das páginas de autenticação. */
+.auth-wrap-largo {
+    max-width: 500px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.auth-par {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 480px) {
+    .auth-par { grid-template-columns: 1fr; }
+}
+
+.auth-submit {
+    padding: 16px;
+    background-color: var(--color-ink);
+    color: var(--color-bg);
+    border: none;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    width: 100%;
+}
+
+.auth-submit:hover:not(:disabled) {
+    background-color: var(--color-ink-deep);
+}
+
+/* A opacidade durante o envio continua inline: depende de estado. */
+.auth-submit:disabled {
+    cursor: not-allowed;
+}
+
+.auth-troca {
+    text-align: center;
+    margin-top: 30px;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+}
+
+.auth-troca a {
+    color: var(--color-text-primary);
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+.auth-pagina {
+    padding: 120px 5%;
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+}
+
+.auth-centro {
+    text-align: center;
+    width: 100%;
+}
+
+.auth-aviso {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+}
+
+.auth-aviso a { color: var(--color-gold-dark); }

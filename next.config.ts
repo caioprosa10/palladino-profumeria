@@ -23,9 +23,16 @@ const cfChallenges = "https://challenges.cloudflare.com";
  * prerenderização de 13 das 27 páginas — incluindo a home, que é a mais
  * visitada —, porque o nonce obriga renderização dinâmica.
  *
- * style-src mantém 'unsafe-inline' porque existem 697 atributos
- * `style={{...}}` no JSX (662 estáticos, 35 dependentes de valor), e
- * nonce não cobre atributo de estilo: resolver exige migrar para classes.
+ * style-src mantém 'unsafe-inline'. As quatro páginas de autenticação já
+ * foram migradas para classes (de 65 estilos inline para 4, todos
+ * dependentes de estado), mas isso ainda não permite impor a política
+ * nelas: Navbar (14), CartDrawer (14), Chatbot (36) e AvisoCookies (4)
+ * entram em todas as páginas pelo layout e continuam com estilo inline.
+ * Impor style-src estrito exige migrar esses componentes compartilhados
+ * também.
+ *
+ * As páginas de /admin recebem nonce em script-src via src/proxy.ts, o
+ * que as tornou dinâmicas de propósito — ver o comentário lá.
  *
  * CSP_REPORT_ONLY=true publica a política estrita em paralelo, sem
  * bloquear, para medir o que ainda quebraria. Ver cspEstrita abaixo.

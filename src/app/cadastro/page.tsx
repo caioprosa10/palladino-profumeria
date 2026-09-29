@@ -74,22 +74,22 @@ function CadastroContent() {
   }
 
   return (
-    <div style={{ maxWidth: '500px', margin: '0 auto', width: '100%' }}>
-      <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.5rem', marginBottom: '10px' }}>Criar Conta</h1>
-        <p style={{ color: 'var(--color-text-secondary)' }}>Junte-se à Palladino Profumeria e acesse benefícios exclusivos.</p>
+    <div className="auth-wrap-largo">
+      <div className="auth-head">
+        <h1 className="auth-title">Criar Conta</h1>
+        <p className="auth-sub">Junte-se à Palladino Profumeria e acesse benefícios exclusivos.</p>
       </div>
 
       {error && (
-        <div style={{ backgroundColor: '#fee2e2', color: '#991b1b', padding: '15px', borderRadius: '8px', marginBottom: '20px', fontSize: '0.9rem' }}>
+        <div className="auth-alert auth-alert-erro">
           {error}
         </div>
       )}
 
-      <form onSubmit={handleCadastro} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <form onSubmit={handleCadastro} className="auth-form">
         {/* Isca para robôs. Escondido da tela e dos leitores de tela, e
             fora da ordem de tabulação, para não atrapalhar quem usa o site. */}
-        <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', width: '1px', height: '1px', overflow: 'hidden' }}>
+        <div aria-hidden="true" className="auth-honeypot">
           <label htmlFor="website">Website</label>
           <input
             id="website"
@@ -99,76 +99,76 @@ function CadastroContent() {
             autoComplete="off"
             value={website}
             onChange={e => setWebsite(e.target.value)}
-          />
+ />
         </div>
         
         <div>
-          <label style={{ display: 'block', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', fontWeight: 500 }}>Nome Completo *</label>
+          <label className="auth-label">Nome Completo *</label>
           <input 
             type="text" 
             value={nome}
             onChange={e => setNome(e.target.value)}
             required
-            style={{ width: '100%', padding: '15px', border: '1px solid #e5e7eb', borderRadius: '4px', fontSize: '1rem', outline: 'none' }}
-          />
+            className="auth-input"
+ />
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', fontWeight: 500 }}>E-mail *</label>
+          <label className="auth-label">E-mail *</label>
           <input 
             type="email" 
             value={email}
             onChange={e => setEmail(e.target.value)}
             required
-            style={{ width: '100%', padding: '15px', border: '1px solid #e5e7eb', borderRadius: '4px', fontSize: '1rem', outline: 'none' }}
-          />
+            className="auth-input"
+ />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+        <div className="auth-par">
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', fontWeight: 500 }}>Telefone</label>
+            <label className="auth-label">Telefone</label>
             <input 
               type="tel" 
               value={telefone}
               onChange={e => setTelefone(e.target.value)}
-              style={{ width: '100%', padding: '15px', border: '1px solid #e5e7eb', borderRadius: '4px', fontSize: '1rem', outline: 'none' }}
+              className="auth-input"
               placeholder="(00) 00000-0000"
-            />
+ />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', fontWeight: 500 }}>CPF</label>
+            <label className="auth-label">CPF</label>
             <input 
               type="text" 
               value={cpf}
               onChange={e => setCpf(e.target.value)}
-              style={{ width: '100%', padding: '15px', border: '1px solid #e5e7eb', borderRadius: '4px', fontSize: '1rem', outline: 'none' }}
+              className="auth-input"
               placeholder="000.000.000-00"
-            />
+ />
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+        <div className="auth-par">
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', fontWeight: 500 }}>Senha *</label>
+            <label className="auth-label">Senha *</label>
             <input 
               type="password" 
               value={senha}
               onChange={e => setSenha(e.target.value)}
               required
               minLength={6}
-              style={{ width: '100%', padding: '15px', border: '1px solid #e5e7eb', borderRadius: '4px', fontSize: '1rem', outline: 'none' }}
-            />
+              className="auth-input"
+ />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', fontWeight: 500 }}>Confirmar Senha *</label>
+            <label className="auth-label">Confirmar Senha *</label>
             <input 
               type="password" 
               value={confirmaSenha}
               onChange={e => setConfirmaSenha(e.target.value)}
               required
               minLength={6}
-              style={{ width: '100%', padding: '15px', border: '1px solid #e5e7eb', borderRadius: '4px', fontSize: '1rem', outline: 'none' }}
-            />
+              className="auth-input"
+ />
           </div>
         </div>
 
@@ -177,28 +177,15 @@ function CadastroContent() {
         <button 
           type="submit" 
           disabled={loading}
-          style={{
-            padding: '16px',
-            backgroundColor: 'var(--color-primary)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            fontSize: '1rem',
-            textTransform: 'uppercase',
-            letterSpacing: '0.1em',
-            fontWeight: 600,
-            cursor: loading ? 'not-allowed' : 'pointer',
-            opacity: loading ? 0.7 : 1,
-            marginTop: '10px'
-          }}
-        >
+          className="auth-submit" style={{ opacity: loading ? 0.7 : 1 }}
+ >
           {loading ? 'Criando Conta...' : 'Cadastrar'}
         </button>
       </form>
 
-      <div style={{ textAlign: 'center', marginTop: '30px', fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
+      <div className="auth-troca">
         Já tem uma conta?{' '}
-        <Link href={`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`} style={{ color: 'var(--color-text)', fontWeight: 600, textDecoration: 'underline' }}>
+        <Link href={`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`} >
           Faça login aqui
         </Link>
       </div>
@@ -210,8 +197,8 @@ export default function CadastroPage() {
   return (
     <>
       <Navbar />
-      <div className="sub-page" style={{ padding: '120px 5%', minHeight: '80vh', display: 'flex', alignItems: 'center' }}>
-        <Suspense fallback={<div style={{ textAlign: 'center', width: '100%' }}>Carregando...</div>}>
+      <div className="sub-page auth-pagina">
+        <Suspense fallback={<div className="auth-centro">Carregando...</div>}>
           <CadastroContent />
         </Suspense>
       </div>

@@ -59,43 +59,43 @@ function LoginContent() {
   }
 
   return (
-    <div style={{ maxWidth: '400px', margin: '0 auto', width: '100%' }}>
-      <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.5rem', marginBottom: '10px' }}>Acesse sua Conta</h1>
-        <p style={{ color: 'var(--color-text-secondary)' }}>Acompanhe seus pedidos e tenha uma experiência premium.</p>
+    <div className="auth-wrap">
+      <div className="auth-head">
+        <h1 className="auth-title">Acesse sua Conta</h1>
+        <p className="auth-sub">Acompanhe seus pedidos e tenha uma experiência premium.</p>
       </div>
 
       {error && (
-        <div style={{ backgroundColor: '#fee2e2', color: '#991b1b', padding: '15px', borderRadius: '8px', marginBottom: '20px', fontSize: '0.9rem' }}>
+        <div className="auth-alert auth-alert-erro">
           {error}
         </div>
       )}
 
-      <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <form onSubmit={handleLogin} className="auth-form">
         <div>
-          <label style={{ display: 'block', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', fontWeight: 500 }}>E-mail</label>
+          <label className="auth-label">E-mail</label>
           <input 
             type="email" 
             value={email}
             onChange={e => setEmail(e.target.value)}
             required
-            style={{ width: '100%', padding: '15px', border: '1px solid #e5e7eb', borderRadius: '4px', fontSize: '1rem', outline: 'none' }}
+            className="auth-input"
             placeholder="seu@email.com"
-          />
+ />
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', fontWeight: 500 }}>Senha</label>
+          <label className="auth-label">Senha</label>
           <input 
             type="password" 
             value={senha}
             onChange={e => setSenha(e.target.value)}
             required
-            style={{ width: '100%', padding: '15px', border: '1px solid #e5e7eb', borderRadius: '4px', fontSize: '1rem', outline: 'none' }}
+            className="auth-input"
             placeholder="Sua senha secreta"
-          />
-          <div style={{ textAlign: 'right', marginTop: '8px' }}>
-            <Link href="/recuperar-senha" style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', textDecoration: 'underline' }}>
+ />
+          <div className="auth-link-linha">
+            <Link href="/recuperar-senha" className="auth-link">
               Esqueceu a senha?
             </Link>
           </div>
@@ -107,7 +107,7 @@ function LoginContent() {
 
         {pede2FA && (
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', fontWeight: 500 }}>
+            <label className="auth-label">
               Código de verificação
             </label>
             <input
@@ -118,10 +118,10 @@ function LoginContent() {
               value={codigo}
               onChange={e => setCodigo(e.target.value)}
               required
-              style={{ width: '100%', padding: '15px', border: '1px solid #e5e7eb', borderRadius: '4px', fontSize: '1rem', outline: 'none', letterSpacing: '0.15em' }}
+              className="auth-input auth-input-codigo"
               placeholder="000000"
-            />
-            <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginTop: '8px' }}>
+ />
+            <p className="auth-dica">
               Use o código do seu aplicativo autenticador, ou um dos códigos de recuperação.
             </p>
           </div>
@@ -130,28 +130,15 @@ function LoginContent() {
         <button 
           type="submit" 
           disabled={loading}
-          style={{
-            padding: '16px',
-            backgroundColor: 'var(--color-primary)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            fontSize: '1rem',
-            textTransform: 'uppercase',
-            letterSpacing: '0.1em',
-            fontWeight: 600,
-            cursor: loading ? 'not-allowed' : 'pointer',
-            opacity: loading ? 0.7 : 1,
-            marginTop: '10px'
-          }}
-        >
+          className="auth-submit" style={{ opacity: loading ? 0.7 : 1 }}
+ >
           {loading ? 'Autenticando...' : 'Entrar'}
         </button>
       </form>
 
-      <div style={{ textAlign: 'center', marginTop: '30px', fontSize: '0.9rem', color: 'var(--color-text-secondary)' }}>
+      <div className="auth-troca">
         Não possui uma conta?{' '}
-        <Link href={`/cadastro?callbackUrl=${encodeURIComponent(callbackUrl)}`} style={{ color: 'var(--color-text)', fontWeight: 600, textDecoration: 'underline' }}>
+        <Link href={`/cadastro?callbackUrl=${encodeURIComponent(callbackUrl)}`} >
           Crie a sua agora
         </Link>
       </div>
@@ -163,8 +150,8 @@ export default function LoginPage() {
   return (
     <>
       <Navbar />
-      <div className="sub-page" style={{ padding: '120px 5%', minHeight: '80vh', display: 'flex', alignItems: 'center' }}>
-        <Suspense fallback={<div style={{ textAlign: 'center', width: '100%' }}>Carregando...</div>}>
+      <div className="sub-page auth-pagina">
+        <Suspense fallback={<div className="auth-centro">Carregando...</div>}>
           <LoginContent />
         </Suspense>
       </div>
