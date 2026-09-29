@@ -2,25 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { cookies } from 'next/headers'
 import { decrypt } from '@/lib/auth'
-import fs from 'fs'
-import path from 'path'
-
-// Helper to write file
-const saveFile = async (file: File): Promise<string> => {
-  const bytes = await file.arrayBuffer()
-  const buffer = Buffer.from(bytes)
-  
-  // Create unique filename
-  const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-  const extension = file.name.split('.').pop()
-  const filename = `${uniqueSuffix}.${extension}`
-  
-  const uploadDir = path.join(process.cwd(), 'public/uploads')
-  const filepath = path.join(uploadDir, filename)
-  
-  fs.writeFileSync(filepath, buffer)
-  return `/uploads/${filename}`
-}
+import { saveImage, UploadInvalidoError } from '@/lib/upload'
 
 export async function POST(req: Request) {
   try {
@@ -69,8 +51,8 @@ export async function POST(req: Request) {
     const imageUrls: string[] = []
     
     for (const file of imageFiles) {
-      if (file.size > 0 && file.type.startsWith('image/')) {
-        const url = await saveFile(file)
+      if (file.size > 0) {
+        const url = await saveImage(file)
         imageUrls.push(url)
       }
     }
@@ -103,6 +85,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, produto: newProduct }, { status: 201 })
   } catch (error: any) {
+    if (error instanceof UploadInvalidoError) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
     console.error('Create Product Error:', error)
     if (error.code === 'P2002') {
       return NextResponse.json({ error: 'Nome ou SKU já existe.' }, { status: 400 })

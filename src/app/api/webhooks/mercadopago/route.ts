@@ -57,7 +57,8 @@ export async function POST(req: Request) {
       where: { id: pedidoId },
       include: { 
         usuario: true,
-        pagamentoObj: true
+        pagamentoObj: true,
+        itens: true
       }
     });
 
@@ -90,10 +91,23 @@ export async function POST(req: Request) {
       });
 
       if (mpPayment.status === 'approved') {
+        // Só baixa estoque na transição para 'pago'. Se o webhook repetir,
+        // o pedido já está pago e o estoque não é debitado de novo.
+        const primeiraAprovacao = pedido.status !== 'pago';
+
         await tx.pedido.update({
           where: { id: pedido.id },
           data: { status: 'pago' }
         });
+
+        if (primeiraAprovacao) {
+          for (const item of pedido.itens) {
+            await tx.produto.update({
+              where: { id: item.produto_id },
+              data: { estoque: { decrement: item.quantidade } }
+            });
+          }
+        }
         
         // Disparar E-mail 1 — Compra realizada com sucesso
         try {
