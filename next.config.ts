@@ -22,18 +22,38 @@ const csp = [
   // Só imagens da própria origem: o catálogo é servido de /public.
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
-  "connect-src 'self'",
+  // Em desenvolvimento o hot reload do Next abre um WebSocket; sem ws:
+  // o CSP o derruba e o cliente de HMR passa a escrever num stream fechado.
+  // Produção continua restrita à própria origem.
+  `connect-src 'self'${isDev ? " ws: wss:" : ""}`,
   // O pagamento é redirecionamento de página, não iframe.
   "frame-src 'none'",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",
-  "upgrade-insecure-requests",
+  // Só em produção: em desenvolvimento o site roda sob http, e esta diretiva
+  // faria o navegador tentar buscar CSS e imagens em https, quebrando tudo
+  // que é acessado por IP da rede local (localhost é exceção no navegador).
+  // Força todo recurso para https. Correto em produção atrás de TLS, mas
+  // quebra qualquer acesso por http — inclusive testar o build de produção
+  // pelo IP da rede. DISABLE_HTTPS_UPGRADE=true desliga só para esse caso.
+  ...(isDev || process.env.DISABLE_HTTPS_UPGRADE === "true"
+    ? []
+    : ["upgrade-insecure-requests"]),
 ].join("; ");
 
 const nextConfig: NextConfig = {
-  reactStrictMode: true,
+  // Apenas desenvolvimento: sem isto o Next bloqueia os recursos de dev
+  // (bundle e HMR) quando o site é aberto pelo IP da rede local em vez de
+  // localhost — o HTML carrega, o JS não, e a página fica presa no loader.
+  // Não tem efeito em produção.
+  allowedDevOrigins: ['192.168.1.12'],
+
+  // Mantido desligado, como no projeto original: o loader do hero em
+  // HeroCanvas.tsx conta os 40 quadros num closure por execução do efeito,
+  // e a dupla execução do modo estrito trava esse contador.
+  reactStrictMode: false,
 
   // Não anunciar a stack para quem sonda o servidor.
   poweredByHeader: false,

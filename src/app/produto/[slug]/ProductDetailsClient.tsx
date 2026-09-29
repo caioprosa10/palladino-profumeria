@@ -79,15 +79,32 @@ export function ProductDetailsClient({ produto, relatedProducts }: ProductDetail
   }
 
   const handleShare = async () => {
+    const url = window.location.href
+
+    // navigator.share e navigator.clipboard só existem em contexto seguro
+    // (https ou localhost). Fora disso são undefined, e chamá-los direto
+    // quebra o botão em vez de apenas degradar.
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: produto.nome,
+          text: `Confira ${produto.nome} na Palladino Profumeria`,
+          url,
+        })
+        return
+      } catch (err) {
+        // Cancelar o diálogo não é erro: não faz sentido copiar o link
+        // e avisar "copiado" para quem desistiu de compartilhar.
+        if ((err as Error)?.name === 'AbortError') return
+      }
+    }
+
     try {
-      await navigator.share({
-        title: produto.nome,
-        text: `Confira ${produto.nome} na Palladino Profumeria`,
-        url: window.location.href,
-      })
-    } catch (err) {
-      navigator.clipboard.writeText(window.location.href)
+      await navigator.clipboard.writeText(url)
       alert('Link copiado para a área de transferência!')
+    } catch {
+      // Último recurso: mostrar o endereço para copiar à mão.
+      prompt('Copie o link do produto:', url)
     }
   }
 

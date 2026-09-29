@@ -28,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="pt-BR" className={`${cormorant.variable} ${montserrat.variable}`}>
+    <html lang="pt-BR" data-scroll-behavior="smooth" className={`${cormorant.variable} ${montserrat.variable}`}>
       <body>
         {children}
         <CartDrawer />

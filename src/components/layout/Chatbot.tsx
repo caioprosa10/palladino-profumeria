@@ -1,5 +1,6 @@
 "use client"
 
+import { v4 as uuidv4 } from 'uuid'
 import { useState, useRef, useEffect } from 'react'
 import { X, Send, Bot, User, Loader2, MessageCircle, RefreshCw, ChevronRight } from 'lucide-react'
 import { CHATBOT_QUESTIONS, CHATBOT_MESSAGES, matchSynonym, ChatbotStep, ChatPreferences, QuestionConfig } from '@/lib/chatbot/config'
@@ -36,7 +37,7 @@ export function Chatbot() {
     
     // Always accept the exact text if we can't find a synonym, or fallback to unknown
     if (!matchedValue && currentStep !== 'CATEGORY') {
-      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'assistant', content: CHATBOT_MESSAGES.fallback }])
+      setMessages(prev => [...prev, { id: uuidv4(), role: 'assistant', content: CHATBOT_MESSAGES.fallback }])
       return
     }
 
@@ -92,7 +93,7 @@ export function Chatbot() {
     if (nextQ) setCurrentQ(nextQ)
 
     if (nextStep !== 'RECOMMENDATION' && nextQ) {
-      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'assistant', content: nextQ.text }])
+      setMessages(prev => [...prev, { id: uuidv4(), role: 'assistant', content: nextQ.text }])
     } else if (nextStep === 'RECOMMENDATION') {
       await fetchRecommendations(newPrefs)
     }
@@ -110,7 +111,7 @@ export function Chatbot() {
       const data = await res.json()
       
       if (!data.products || data.products.length === 0) {
-        setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'assistant', content: data.message || "Não encontramos produtos para esta solicitação." }])
+        setMessages(prev => [...prev, { id: uuidv4(), role: 'assistant', content: data.message || "Não encontramos produtos para esta solicitação." }])
         setStep('END')
         return
       }
@@ -153,11 +154,11 @@ export function Chatbot() {
         </div>
       )
 
-      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'assistant', content: productsHtml }])
+      setMessages(prev => [...prev, { id: uuidv4(), role: 'assistant', content: productsHtml }])
       setStep('END')
       
     } catch (err) {
-      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'assistant', content: CHATBOT_MESSAGES.error }])
+      setMessages(prev => [...prev, { id: uuidv4(), role: 'assistant', content: CHATBOT_MESSAGES.error }])
     } finally {
       setIsLoading(false)
     }
@@ -165,7 +166,7 @@ export function Chatbot() {
 
   const handleSend = (text: string) => {
     if (!text.trim() || isLoading) return
-    setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'user', content: text }])
+    setMessages(prev => [...prev, { id: uuidv4(), role: 'user', content: text }])
     setInput('')
     advanceStep(step, text)
   }
