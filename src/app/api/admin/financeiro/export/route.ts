@@ -1,24 +1,11 @@
 import { NextResponse } from 'next/server'
+import { requireAdminApi } from '@/lib/guard'
 import { prisma } from '@/lib/prisma'
-import { cookies } from 'next/headers'
-import { decrypt } from '@/lib/auth'
-
-async function checkAuth() {
-  const cookieStore = await cookies()
-  const session = cookieStore.get('session')?.value
-  if (!session) return false
-  
-  const payload = await decrypt(session)
-  if (!payload || (payload.role !== 'ADMIN' && payload.role !== 'SUPERADMIN')) {
-    return false
-  }
-  return true
-}
 
 export async function GET() {
   try {
-    const isAuth = await checkAuth()
-    if (!isAuth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requireAdminApi()
+    if (auth.response) return auth.response
 
     // Fetch all non-canceled orders
     const pedidos = await prisma.pedido.findMany({

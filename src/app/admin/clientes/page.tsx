@@ -1,10 +1,20 @@
 import { prisma } from '@/lib/prisma'
+import { requireAdminPage } from '@/lib/guard'
 
 export default async function AdminClientes() {
+  await requireAdminPage()
+
   const clientes = await prisma.user.findMany({
     where: { role: 'CUSTOMER' },
     orderBy: { createdAt: 'desc' },
-    include: {
+    // select explícito: sem ele o Prisma traz também o hash da senha.
+    select: {
+      id: true,
+      nome: true,
+      email: true,
+      telefone: true,
+      ativo: true,
+      createdAt: true,
       _count: { select: { pedidos: true } }
     }
   })

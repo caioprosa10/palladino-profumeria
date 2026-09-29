@@ -1,18 +1,9 @@
+import { requireAdminPage } from '@/lib/guard'
 import { prisma } from '@/lib/prisma'
 import ProductForm from '@/components/admin/ProductForm'
-import { cookies } from 'next/headers'
-import { decrypt } from '@/lib/auth'
-import { redirect } from 'next/navigation'
 
 export default async function NovoProdutoPage() {
-  const cookieStore = await cookies()
-  const session = cookieStore.get('session')?.value
-  if (!session) redirect('/login')
-
-  const payload = await decrypt(session)
-  if (!payload || (payload.role !== 'ADMIN' && payload.role !== 'SUPERADMIN')) {
-    redirect('/minha-conta')
-  }
+  await requireAdminPage()
 
   const categorias = await prisma.categoria.findMany({
     orderBy: { nome: 'asc' }

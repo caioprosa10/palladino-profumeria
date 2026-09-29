@@ -1,26 +1,13 @@
 import { NextResponse } from 'next/server'
+import { requireAdminApi } from '@/lib/guard'
 import { prisma } from '@/lib/prisma'
-import { cookies } from 'next/headers'
-import { decrypt } from '@/lib/auth'
-import bcrypt from 'bcryptjs'
-
-async function checkAuth() {
-  const cookieStore = await cookies()
-  const session = cookieStore.get('session')?.value
-  if (!session) return false
-  
-  const payload = await decrypt(session)
-  if (!payload || payload.role !== 'SUPERADMIN') {
-    return false
-  }
-  return true
-}
+import { hashSenha, senhaSchema } from '@/lib/password'
 
 export async function PUT(request: Request, props: { params: Promise<{ id: string }> }) {
   try {
     const params = await props.params
-    const isAuth = await checkAuth()
-    if (!isAuth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requireAdminApi()
+    if (auth.response) return auth.response
 
     const { nome, email, senha, role, ativo } = await request.json()
 
@@ -47,7 +34,11 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
     }
 
     if (senha && senha.trim() !== '') {
-      dataToUpdate.senha = await bcrypt.hash(senha, 10)
+      const senhaValida = senhaSchema.safeParse(senha)
+      if (!senhaValida.success) {
+        return NextResponse.json({ error: senhaValida.error.issues[0].message }, { status: 400 })
+      }
+      dataToUpdate.senha = await hashSenha(senha)
     }
 
     const adminAtualizado = await prisma.user.update({
@@ -72,8 +63,8 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
 export async function DELETE(request: Request, props: { params: Promise<{ id: string }> }) {
   try {
     const params = await props.params
-    const isAuth = await checkAuth()
-    if (!isAuth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requireAdminApi()
+    if (auth.response) return auth.response
 
     // Impedir que o SuperAdmin exclua a si mesmo
     const userToVerify = await prisma.user.findUnique({ where: { id: params.id } })

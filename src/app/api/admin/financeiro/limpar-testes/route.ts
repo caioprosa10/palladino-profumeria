@@ -1,18 +1,11 @@
 import { NextResponse } from 'next/server'
+import { requireAdminApi } from '@/lib/guard'
 import { prisma } from '@/lib/prisma'
-import { cookies } from 'next/headers'
-import { decrypt } from '@/lib/auth'
 
 export async function POST(request: Request) {
   try {
-    const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get('session')?.value
-    if (!sessionCookie) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    
-    const session = await decrypt(sessionCookie)
-    if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPERADMIN')) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    const auth = await requireAdminApi()
+    if (auth.response) return auth.response
 
     // Apaga pedidos cujo pagamento está pendente ou rejeitado (testes)
     // Usamos deleteMany porque os modelos dependentes (ItemPedido, Pagamento, Shipping)
@@ -36,7 +29,7 @@ export async function POST(request: Request) {
 
     await prisma.adminLog.create({
       data: {
-        usuario_id: session.id as string,
+        usuario_id: auth.user.id,
         acao: 'CLEANUP_TEST_ORDERS',
         detalhes: `Foram removidos ${result.count + resultNoPayment.count} pedidos não pagos do banco de dados.`
       }

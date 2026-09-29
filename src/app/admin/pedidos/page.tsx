@@ -1,6 +1,4 @@
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
-import { decrypt } from '@/lib/auth'
+import { requireAdminPage } from '@/lib/guard'
 import { prisma } from '@/lib/prisma'
 import OrderFormRow from './OrderFormRow'
 import Link from 'next/link'
@@ -28,13 +26,7 @@ function getStatusBadge(statusPedido: string, statusPagamento: string | null) {
 
 export default async function AdminPedidosPage(props: { searchParams: Promise<{ status?: string }> }) {
   const searchParams = await props.searchParams
-  const cookieStore = await cookies()
-  const sessionCookie = cookieStore.get('session')?.value
-
-  if (!sessionCookie) redirect('/login')
-
-  const session = await decrypt(sessionCookie)
-  if (!session || (session.role !== 'ADMIN' && session.role !== 'SUPERADMIN')) redirect('/')
+  await requireAdminPage()
 
   const statusFilter = searchParams.status
   let whereClause: any = {}

@@ -1,20 +1,13 @@
 import { NextResponse } from 'next/server'
+import { requireAdminApi } from '@/lib/guard'
 import { prisma } from '@/lib/prisma'
-import { cookies } from 'next/headers'
-import { decrypt } from '@/lib/auth'
 import { saveImage, UploadInvalidoError } from '@/lib/upload'
 
 export async function POST(req: Request) {
   try {
     // 1. Auth & RBAC Check
-    const cookieStore = await cookies()
-    const session = cookieStore.get('session')?.value
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    
-    const payload = await decrypt(session)
-    if (!payload || (payload.role !== 'ADMIN' && payload.role !== 'SUPERADMIN')) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    const auth = await requireAdminApi()
+    if (auth.response) return auth.response
 
     // 2. Parse FormData
     const formData = await req.formData()

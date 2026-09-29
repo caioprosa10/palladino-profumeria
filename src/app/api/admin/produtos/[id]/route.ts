@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
+import { requireAdminApi } from '@/lib/guard'
 import { prisma } from '@/lib/prisma'
-import { cookies } from 'next/headers'
-import { decrypt } from '@/lib/auth'
 import { saveImage, UploadInvalidoError } from '@/lib/upload'
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -9,14 +8,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const { id } = await params
     
     // 1. Auth Check
-    const cookieStore = await cookies()
-    const session = cookieStore.get('session')?.value
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    
-    const payload = await decrypt(session)
-    if (!payload || (payload.role !== 'ADMIN' && payload.role !== 'SUPERADMIN')) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    const auth = await requireAdminApi()
+    if (auth.response) return auth.response
 
     // 2. Parse FormData
     const formData = await req.formData()
@@ -107,14 +100,8 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     const { id } = await params
     
     // Auth Check
-    const cookieStore = await cookies()
-    const session = cookieStore.get('session')?.value
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    
-    const payload = await decrypt(session)
-    if (!payload || (payload.role !== 'ADMIN' && payload.role !== 'SUPERADMIN')) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    const auth = await requireAdminApi()
+    if (auth.response) return auth.response
 
     await prisma.produto.delete({
       where: { id }

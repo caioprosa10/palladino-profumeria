@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { requireAdminPage } from '@/lib/guard'
 import Link from 'next/link'
 import ProductTable from '@/components/admin/ProductTable'
 
@@ -7,6 +8,8 @@ export default async function AdminProdutos({
 }: {
   searchParams: Promise<{ q?: string; page?: string }>
 }) {
+  await requireAdminPage()
+
   const { q, page } = await searchParams
   const currentPage = Number(page) || 1
   const perPage = 10

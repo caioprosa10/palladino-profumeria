@@ -1,25 +1,12 @@
 import { NextResponse } from 'next/server'
+import { requireAdminApi } from '@/lib/guard'
 import { prisma } from '@/lib/prisma'
-import { cookies } from 'next/headers'
-import { decrypt } from '@/lib/auth'
-import bcrypt from 'bcryptjs'
-
-async function checkAuth() {
-  const cookieStore = await cookies()
-  const session = cookieStore.get('session')?.value
-  if (!session) return false
-  
-  const payload = await decrypt(session)
-  if (!payload || payload.role !== 'SUPERADMIN') {
-    return false
-  }
-  return true
-}
+import { hashSenha, senhaSchema } from '@/lib/password'
 
 export async function GET() {
   try {
-    const isAuth = await checkAuth()
-    if (!isAuth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requireAdminApi()
+    if (auth.response) return auth.response
 
     const usuarios = await prisma.user.findMany({
       where: { role: { in: ['ADMIN', 'SUPERADMIN'] } },
@@ -42,10 +29,16 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const isAuth = await checkAuth()
-    if (!isAuth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requireAdminApi()
+    if (auth.response) return auth.response
 
     const { nome, email, senha, role, ativo } = await request.json()
+
+    // Conta de administrador exige senha forte como qualquer outra.
+    const senhaValida = senhaSchema.safeParse(senha)
+    if (!senhaValida.success) {
+      return NextResponse.json({ error: senhaValida.error.issues[0].message }, { status: 400 })
+    }
 
     if (!nome || !email || !senha || !role) {
       return NextResponse.json({ error: 'Todos os campos são obrigatórios' }, { status: 400 })
@@ -59,7 +52,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'E-mail já está em uso' }, { status: 400 })
     }
 
-    const hashedPassword = await bcrypt.hash(senha, 10)
+    const hashedPassword = await hashSenha(senha)
 
     const novoAdmin = await prisma.user.create({
       data: {
