@@ -1,0 +1,51 @@
+# Deploy no Render (https://render.com).
+#
+# O disco da aplicação é recriado a cada deploy, então o banco SQLite e as
+# imagens enviadas pelo painel ficam num volume persistente montado em /data.
+# Sem isso, todo deploy apagaria pedidos, contas e fotos de produto.
+
+services:
+  - type: web
+    name: palladino-profumeria
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+
+    disk:
+      name: dados
+      mountPath: /data
+      sizeGB: 1
+
+    envVars:
+      # Banco e uploads no volume, não no disco descartável da aplicação.
+      - key: DATABASE_URL
+        value: file:/data/prod.db
+      - key: UPLOADS_DIR
+        value: /data/uploads
+
+      # Gere com: openssl rand -base64 48
+      # A aplicação não sobe sem isso, e não existe valor padrão de propósito.
+      - key: JWT_SECRET
+        generateValue: true
+
+      - key: NODE_VERSION
+        value: "20"
+
+      # Preencha pelo painel do Render (marcadas como sync:false para não
+      # ficarem escritas neste arquivo, que é público).
+      - key: MP_ACCESS_TOKEN
+        sync: false
+      - key: MP_WEBHOOK_SECRET
+        sync: false
+      - key: MELHOR_ENVIO_TOKEN
+        sync: false
+      - key: CEP_ORIGEM
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false

@@ -47,10 +47,25 @@ export async function saveImage(file: File): Promise<string> {
 
   // Nome gerado por nós: nada do nome original é reaproveitado.
   const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}.${formato.ext}`
-  const uploadDir = path.join(process.cwd(), 'public', 'uploads')
+  const uploadDir = getUploadDir()
 
   await fs.mkdir(uploadDir, { recursive: true })
   await fs.writeFile(path.join(uploadDir, filename), buffer)
 
   return `/uploads/${filename}`
+}
+
+/**
+ * Onde as imagens enviadas são gravadas.
+ *
+ * Em desenvolvimento é public/uploads, servido estaticamente pelo Next.
+ * Em produção o disco da aplicação é recriado a cada deploy, então
+ * UPLOADS_DIR deve apontar para um volume persistente; nesse caso quem
+ * serve os arquivos é a rota src/app/uploads/[...caminho]/route.ts.
+ */
+export function getUploadDir(): string {
+  const configurado = process.env.UPLOADS_DIR
+  return configurado && configurado.trim()
+    ? path.resolve(configurado)
+    : path.join(process.cwd(), 'public', 'uploads')
 }

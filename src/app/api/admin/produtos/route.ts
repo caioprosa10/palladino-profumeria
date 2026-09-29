@@ -32,10 +32,13 @@ export async function POST(req: Request) {
     // Generate Slug
     const slug = nome.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
 
-    // Autogenerate SKU
-    const seq = await prisma.skuSequence.update({
+    // Autogenerate SKU.
+    // upsert e não update: em uma instalação nova a linha do contador ainda
+    // não existe, e um update falharia com P2025 no primeiro produto criado.
+    const seq = await prisma.skuSequence.upsert({
       where: { id: 1 },
-      data: { valor: { increment: 1 } }
+      update: { valor: { increment: 1 } },
+      create: { id: 1, valor: 1 }
     });
     const sku = `DX-${seq.valor.toString().padStart(6, '0')}`;
 

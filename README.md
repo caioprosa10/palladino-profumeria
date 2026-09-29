@@ -36,6 +36,8 @@ Todas ficam no `.env`, que **nunca** deve ser versionado. Use o
 | `CEP_ORIGEM` | frete | CEP de origem das remessas |
 | `GEMINI_API_KEY` | chatbot | Consultor virtual |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | seed | Administrador criado pelo seed |
+| `UPLOADS_DIR` | produção | Pasta das imagens enviadas pelo painel |
+| `DISABLE_HTTPS_UPGRADE` | não | Só para testar o build de produção sobre http |
 
 Gere o `JWT_SECRET` com:
 
@@ -46,6 +48,33 @@ openssl rand -base64 48
 A aplicação não assina nem valida sessões sem essa variável — não existe
 valor padrão de propósito, para que um segredo publicado no código nunca
 possa ser usado para forjar uma sessão de administrador.
+
+## Deploy
+
+O projeto precisa de um servidor Node: são rotas de API, páginas
+renderizadas no servidor e um banco. Hospedagem estática — GitHub Pages,
+por exemplo — não consegue executá-lo.
+
+O `render.yaml` na raiz descreve o serviço para o [Render](https://render.com):
+basta apontar o painel para este repositório. Railway funciona igual, com as
+mesmas variáveis.
+
+Dois pontos que valem atenção:
+
+**Volume persistente.** O disco da aplicação é recriado a cada deploy. O
+banco (`DATABASE_URL=file:/data/prod.db`) e as imagens do painel
+(`UPLOADS_DIR=/data/uploads`) precisam ficar num volume montado, senão
+cada deploy apaga pedidos, contas e fotos de produto.
+
+**Variáveis que afetam cabeçalhos valem no build.** O `headers()` do
+Next é resolvido durante `next build` e gravado em `routes-manifest.json`,
+não lido a cada requisição. Defini-las só na execução não tem efeito.
+
+Depois do primeiro deploy, crie o administrador:
+
+```bash
+npm run db:seed
+```
 
 ## Notas de segurança
 
