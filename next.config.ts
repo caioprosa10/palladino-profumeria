@@ -16,12 +16,19 @@ const cfChallenges = "https://challenges.cloudflare.com";
 /**
  * Content Security Policy.
  *
+ * Estado medido em 2026-09-29:
+ *
  * script-src mantém 'unsafe-inline' porque o Next injeta scripts de
- * hidratação sem nonce. A alternativa — nonce por requisição via proxy —
- * obriga renderização dinâmica em todas as páginas e, principalmente,
- * exigiria trocar os 646 atributos `style={{...}}` do JSX por classes,
- * já que style inline também é bloqueado por CSP estrito. Enquanto isso
- * não acontece, o 'unsafe-inline' fica documentado em vez de escondido.
+ * hidratação sem nonce. Adotar nonce por requisição custa a
+ * prerenderização de 13 das 27 páginas — incluindo a home, que é a mais
+ * visitada —, porque o nonce obriga renderização dinâmica.
+ *
+ * style-src mantém 'unsafe-inline' porque existem 697 atributos
+ * `style={{...}}` no JSX (662 estáticos, 35 dependentes de valor), e
+ * nonce não cobre atributo de estilo: resolver exige migrar para classes.
+ *
+ * CSP_REPORT_ONLY=true publica a política estrita em paralelo, sem
+ * bloquear, para medir o que ainda quebraria. Ver cspEstrita abaixo.
  *
  * 'unsafe-eval' só em desenvolvimento: o React usa eval para reconstruir
  * stacks de erro. Em produção nada no projeto usa eval.
@@ -55,6 +62,32 @@ const csp = [
     : ["upgrade-insecure-requests"]),
 ].join("; ");
 
+/**
+ * A política que queremos alcançar, sem 'unsafe-inline' em lugar nenhum.
+ *
+ * Publicada apenas como Content-Security-Policy-Report-Only quando
+ * CSP_REPORT_ONLY=true: o navegador não bloqueia nada, só relata em
+ * /api/csp-report o que seria bloqueado. É assim que se mede o tamanho da
+ * migração dos estilos inline antes de passar a impor.
+ */
+const cspEstrita = [
+  "default-src 'self'",
+  `script-src 'self'${turnstileAtivo ? ` ${cfChallenges}` : ""}`,
+  "style-src 'self'",
+  "img-src 'self' data: blob:",
+  "font-src 'self' data:",
+  `connect-src 'self'${turnstileAtivo ? ` ${cfChallenges}` : ""}`,
+  turnstileAtivo ? `frame-src ${cfChallenges}` : "frame-src 'none'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  "report-uri /api/csp-report",
+  "report-to csp",
+].join("; ");
+
+const medirCspEstrita = process.env.CSP_REPORT_ONLY === "true";
+
 const nextConfig: NextConfig = {
   // Apenas desenvolvimento: sem isto o Next bloqueia os recursos de dev
   // (bundle e HMR) quando o site é aberto pelo IP da rede local em vez de
@@ -84,6 +117,15 @@ const nextConfig: NextConfig = {
         source: "/(.*)",
         headers: [
           { key: "Content-Security-Policy", value: csp },
+          ...(medirCspEstrita
+            ? [
+                { key: "Content-Security-Policy-Report-Only", value: cspEstrita },
+                {
+                  key: "Reporting-Endpoints",
+                  value: 'csp="/api/csp-report"',
+                },
+              ]
+            : []),
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
