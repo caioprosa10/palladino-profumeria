@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coleção Feminina | Dubai Elixir</title>
+    <meta name="description" content="Explore a Coleção Feminina da Aura D'Or, essências florais e ambaradas que celebram a elegância eterna.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Montserrat:wght@200;300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="sub-page">
+
+    <!-- Loader de Luxo -->
+    <div id="loader" class="loader-container">
+        <div class="loader-content">
+            <h2 class="loader-brand">Dubai Elixir</h2>
+            <div class="loader-bar-container">
+                <div class="loader-bar" style="width: 100%;"></div>
+            </div>
+            <span class="loader-percentage">100%</span>
+        </div>
+    </div>
+
+    <!-- Header / Navbar Minimalista -->
+    <header class="main-header">
+        <div class="logo" onclick="window.location.href='index.html'">DUBAI ELIXIR</div>
+        <nav class="nav-links">
+            <a href="index.html" class="nav-item">Universo</a>
+            <a href="sobre.html" class="nav-item">Sobre</a>
+            <a href="masculino.html" class="nav-item">Masculino</a>
+            <a href="feminino.html" class="nav-item">Feminino</a>
+        </nav>
+        <div class="header-actions">
+            <button id="search-btn" aria-label="Buscar" class="icon-btn">
+                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </button>
+            <button id="cart-btn" aria-label="Sacola de Compras" class="icon-btn">
+                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Seção Perfumes Femininos -->
+    <section class="collection-section">
+        <!-- Banner da Coleção Feminina (CAMINHO CORRIGIDO) -->
+        <div class="collection-banner">
+            <div class="banner-bg" style="background-image: url('imagem perfume/collection-women.jpg');"></div>
+            <div class="banner-overlay"></div>
+            <div class="banner-content">
+                <span class="collection-tag animate-reveal revealed">POUR FEMME</span>
+                <h2 class="collection-title animate-reveal revealed">La Finesse</h2>
+                <p class="collection-description animate-reveal revealed">Essências florais e ambaradas que celebram a elegância eterna. Um véu invisível de sofisticação e sensualidade.</p>
+            </div>
+        </div>
+
+        <!-- Grid de Cards de Perfume -->
+        <div class="collection-grid-container">
+            <div class="collection-grid">
+                <!-- Card 1 (CAMINHO CORRIGIDO) -->
+                <div class="perfume-card animate-reveal revealed">
+                    <div class="card-img-wrapper">
+                        <img src="imagem perfume/perfume-women-1.jpg" alt="AURA ROSÉ" class="card-img">
+                        <div class="card-hover-overlay">
+                            <span class="btn-card">Adicionar à Sacola</span>
+                        </div>
+                    </div>
+                    <div class="card-info">
+                        <span class="perfume-family">Floral Ambarado</span>
+                        <h3 class="perfume-name">Aura Rosé</h3>
+                        <p class="perfume-desc">Uma ode à feminilidade delicada, unindo pós de rosa de Grasse e âmbar quente.</p>
+                    </div>
+                </div>
+                <!-- Card 2 (CAMINHO CORRIGIDO) -->
+                <div class="perfume-card animate-reveal revealed">
+                    <div class="card-img-wrapper">
+                        <img src="imagem perfume/perfume-women-1.jpg" alt="AURA BLANC" class="card-img card-img-variant-silver">
+                        <div class="card-hover-overlay">
+                            <span class="btn-card">Adicionar à Sacola</span>
+                        </div>
+                    </div>
+                    <div class="card-info">
+                        <span class="perfume-family">Floral Branco</span>
+                        <h3 class="perfume-name">Aura Blanc</h3>
+                        <p class="perfume-desc">A pureza divina do jasmim sob a brisa fresca de almíscar e notas oceânicas.</p>
+                    </div>
+                </div>
+                <!-- Card 3 (CAMINHO CORRIGIDO) -->
+                <div class="perfume-card animate-reveal revealed">
+                    <div class="card-img-wrapper">
+                        <img src="imagem perfume/perfume-women-1.jpg" alt="AURA ÉCLAT" class="card-img card-img-variant-gold">
+                        <div class="card-hover-overlay">
+                            <span class="btn-card">Adicionar à Sacola</span>
+                        </div>
+                    </div>
+                    <div class="card-info">
+                        <span class="perfume-family">Frutal Oriental</span>
+                        <h3 class="perfume-name">Aura Éclat</h3>
+                        <p class="perfume-desc">O brilho cintilante de frutas vermelhas combinadas à sensualidade da baunilha.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Painel Lateral: Sacola & Pedidos -->
+    <div id="cart-drawer" class="cart-drawer">
+        <div class="drawer-overlay" id="drawer-overlay"></div>
+        <div class="drawer-content">
+            <div class="drawer-header">
+                <h3 class="drawer-title">Meu Universo</h3>
+                <button id="close-drawer-btn" class="close-drawer-btn" aria-label="Fechar Sacola">&times;</button>
+            </div>
+            <div class="drawer-tabs">
+                <button id="tab-cart-btn" class="tab-btn active">Sacola (<span id="cart-count">0</span>)</button>
+                <button id="tab-orders-btn" class="tab-btn">Pedidos (<span id="orders-count">0</span>)</button>
+            </div>
+            <div class="drawer-body">
+                <div id="tab-cart-content" class="tab-content active">
+                    <div class="cart-items-container" id="cart-items"></div>
+                    <div class="cart-summary-footer">
+                        <div class="summary-line">
+                            <span>Subtotal</span>
+                            <span id="cart-subtotal">R$ 0,00</span>
+                        </div>
+                        <div class="summary-line highlight-total">
+                            <span>Total a Pagar</span>
+                            <span class="cart-total-value" id="cart-total">R$ 0,00</span>
+                        </div>
+                        <button id="checkout-btn" class="btn btn-primary btn-block">Confirmar Pedido</button>
+                    </div>
+                </div>
+                <div id="tab-orders-content" class="tab-content">
+                    <div class="orders-container" id="orders-list">
+                        <div class="no-orders" id="no-orders-msg">
+                            <p>Nenhum pedido realizado ainda.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+</body>
+</html>

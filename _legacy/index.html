@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DUBAI ELIXIR | Haute Parfumerie</title>
+    <meta name="description" content="Descubra Dubai Elixir, a essência do luxo invisível. Alta perfumaria feita para transcender o tempo.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Montserrat:wght@200;300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div id="loader" class="loader-container">
+        <div class="loader-content">
+            <h2 class="loader-brand">DUBAI ELIXIR</h2>
+            <div class="loader-bar-container">
+                <div id="loader-bar" class="loader-bar"></div>
+            </div>
+            <span id="loader-percentage" class="loader-percentage">0%</span>
+        </div>
+    </div>
+
+    <header class="main-header">
+        <div class="logo" onclick="window.location.href='index.html'">DUBAI ELIXIR</div>
+        <nav class="nav-links">
+            <a href="index.html" class="nav-item">Universo</a>
+            <a href="sobre.html" class="nav-item">Sobre</a>
+            <a href="masculino.html" class="nav-item">Masculino</a>
+            <a href="feminino.html" class="nav-item">Feminino</a>
+            <a href="miniaturas.html" class="nav-item">Miniaturas</a>
+            <a href="atacado.html" class="nav-item">Atacado</a>
+        </nav>
+        <div class="header-actions">
+            <button id="search-btn" aria-label="Buscar" class="icon-btn">
+                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </button>
+            <button id="cart-btn" aria-label="Sacola de Compras" class="icon-btn">
+                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="hero-section" id="hero">
+        
+        <div class="canvas-container">
+            <canvas id="perfume-canvas"></canvas>
+            <div class="canvas-overlay"></div>
+        </div>
+
+        <div class="hero-content">
+            <span class="hero-tagline animate-reveal">HAUTE PARFUMERIE</span>
+            <h1 class="hero-title animate-reveal">L'Éphémère</h1>
+            <p class="hero-description animate-reveal">
+                A essência do luxo invisível, capturada em um frasco eterno. Uma combinação singular de notas raras que expressa sofisticação e mistério.
+            </p>
+            <div class="hero-actions animate-reveal">
+                <a href="masculino.html" class="btn btn-primary">Descubra a Fragrância</a>
+                <a href="#video" class="btn btn-secondary">
+                    <span>Assistir Campanha</span>
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                </a>
+            </div>
+        </div>
+
+        <div class="hero-footer">
+            <div class="interaction-hint">
+                <span class="mouse-icon">
+                    <span class="mouse-wheel"></span>
+                </span>
+                <span class="hint-text">DUBAI ELIXIR AUTOMATIQUE</span>
+            </div>
+            
+            <div class="carousel-indicators">
+                <span class="indicator active">01</span>
+                <a href="masculino.html" class="indicator" style="text-decoration:none;">02</a>
+                <a href="feminino.html" class="indicator" style="text-decoration:none;">03</a>
+            </div>
+        </div>
+    </main>
+
+    <div id="cart-drawer" class="cart-drawer">
+        <div class="drawer-overlay" id="drawer-overlay"></div>
+        <div class="drawer-content">
+            <div class="drawer-header">
+                <h3 class="drawer-title">Meu Universo</h3>
+                <button id="close-drawer-btn" class="close-drawer-btn" aria-label="Fechar Sacola">&times;</button>
+            </div>
+            <div class="drawer-tabs">
+                <button id="tab-cart-btn" class="tab-btn active">Sacola (<span id="cart-count">0</span>)</button>
+                <button id="tab-orders-btn" class="tab-btn">Pedidos (<span id="orders-count">0</span>)</button>
+            </div>
+            <div class="drawer-body">
+                <div id="tab-cart-content" class="tab-content active">
+                    <div class="cart-items-container" id="cart-items">
+                        <!-- Itens do carrinho aparecem aqui -->
+                    </div>
+                    
+                    <div class="cart-summary-footer">
+                        <!-- Seção de Cálculo de Frete -->
+                        <div class="freight-section" style="margin-bottom: 20px; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 15px;">
+                            <span style="font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--color-text-secondary); display: block; margin-bottom: 10px;">Calcular Frete</span>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" id="cep-input" placeholder="00000-000" maxlength="9" style="flex: 1; padding: 10px; background: transparent; border: 1px solid rgba(0,0,0,0.1); color: var(--color-text-primary); outline: none;">
+                                <button id="calc-freight-btn" class="btn-card" style="padding: 10px 15px;">Calcular</button>
+                            </div>
+                            <div id="freight-options" style="display: none; margin-top: 15px; flex-direction: column; gap: 8px;">
+                                <!-- Opções de frete aparecerão aqui -->
+                            </div>
+                        </div>
+
+                        <!-- Resumo de Valores -->
+                        <div class="summary-line">
+                            <span>Subtotal</span>
+                            <span id="cart-subtotal">R$ 0,00</span>
+                        </div>
+                        <div class="summary-line" id="freight-line" style="display: none;">
+                            <span>Frete</span>
+                            <span id="cart-freight-value">R$ 0,00</span>
+                        </div>
+                        <div class="summary-line highlight-total">
+                            <span>Total a Pagar</span>
+                            <span class="cart-total-value" id="cart-total">R$ 0,00</span>
+                        </div>
+                        <button id="checkout-btn" class="btn btn-primary btn-block">Confirmar Pedido</button>
+                    </div>
+                </div>
+
+                <div id="tab-orders-content" class="tab-content">
+                    <div class="orders-container" id="orders-list">
+                        <div class="no-orders" id="no-orders-msg">
+                            <p>Nenhum pedido realizado ainda.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

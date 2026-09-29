@@ -1,0 +1,232 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(cuid())
+  nome      String
+  email     String     @unique
+  senha     String
+  telefone  String?
+  cpf       String?
+  role      String     @default("CUSTOMER")
+  ativo     Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  adminLogs AdminLog[]
+  carrinhos Carrinho[]
+  enderecos Endereco[]
+  pedidos   Pedido[]
+}
+
+model Endereco {
+  id          String   @id @default(cuid())
+  usuario_id  String
+  cep         String
+  rua         String
+  numero      String
+  complemento String?
+  bairro      String
+  cidade      String
+  estado      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  usuario     User     @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+}
+
+model Marca {
+  id        String    @id @default(cuid())
+  nome      String
+  slug      String    @unique
+  logo      String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  produtos  Produto[]
+}
+
+model Categoria {
+  id        String    @id @default(cuid())
+  nome      String
+  slug      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  produtos  Produto[]
+}
+
+model Produto {
+  id                 String         @id @default(cuid())
+  nome               String
+  slug               String         @unique
+  sku                String         @unique
+  descricao          String
+  descricao_curta    String?
+  preco              Float
+  preco_promocional  Float?
+  estoque            Int            @default(0)
+  volume_ml          Int?
+  concentracao       String?
+  origem             String?
+  miniatura          Boolean        @default(false)
+  atacado            Boolean        @default(false)
+  destaque           Boolean        @default(false)
+  ativo              Boolean        @default(true)
+  categoria_id       String
+  marca_id           String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  codigo_barras      String?
+  dimensoes          String?
+  fragrancia         String?
+  peso               Float?
+  genero             String?
+  ingredientes       String?
+  notas_olfativas    String?
+  descricao_olfativa String?
+  imagens            Imagem[]
+  itensCart          ItemCarrinho[]
+  itensPed           ItemPedido[]
+  marca              Marca?         @relation(fields: [marca_id], references: [id])
+  categoria          Categoria      @relation(fields: [categoria_id], references: [id])
+}
+
+model Imagem {
+  id         String   @id @default(cuid())
+  produto_id String
+  url        String
+  ordem      Int      @default(0)
+  createdAt  DateTime @default(now())
+  produto    Produto  @relation(fields: [produto_id], references: [id], onDelete: Cascade)
+}
+
+model Carrinho {
+  id         String         @id @default(cuid())
+  usuario_id String?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  usuario    User?          @relation(fields: [usuario_id], references: [id])
+  itens      ItemCarrinho[]
+}
+
+model ItemCarrinho {
+  id          String   @id @default(cuid())
+  carrinho_id String
+  produto_id  String
+  quantidade  Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  produto     Produto  @relation(fields: [produto_id], references: [id])
+  carrinho    Carrinho @relation(fields: [carrinho_id], references: [id], onDelete: Cascade)
+}
+
+model Pedido {
+  id              String       @id @default(cuid())
+  usuario_id      String
+  status          String       @default("preparo")
+  subtotal        Float
+  frete           Float
+  desconto        Float        @default(0)
+  total           Float
+  pagamento       String?
+  transportadora  String?
+  codigo_rastreio String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  itens           ItemPedido[]
+  usuario         User         @relation(fields: [usuario_id], references: [id])
+  shipping        Shipping?
+  pagamentoObj    Pagamento?
+}
+
+model ItemPedido {
+  id         String   @id @default(cuid())
+  pedido_id  String
+  produto_id String
+  quantidade Int
+  preco      Float
+  createdAt  DateTime @default(now())
+  produto    Produto  @relation(fields: [produto_id], references: [id])
+  pedido     Pedido   @relation(fields: [pedido_id], references: [id], onDelete: Cascade)
+}
+
+model AdminLog {
+  id         String   @id @default(cuid())
+  usuario_id String
+  acao       String
+  detalhes   String?
+  createdAt  DateTime @default(now())
+  usuario    User     @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+}
+
+model ConfiguracaoFrete {
+  id           String   @id @default(cuid())
+  token        String?
+  clientId     String?
+  clientSecret String?
+  ambiente     String   @default("production")
+  cepOrigem    String   @default("00000000")
+  atualizadoEm DateTime @updatedAt
+}
+
+model Shipping {
+  id             String   @id @default(cuid())
+  pedido_id      String   @unique
+  transportadora String
+  servico        String
+  valor          Float
+  prazo          Int
+  codigo_servico String?
+  rastreamento   String?
+  data           DateTime @default(now())
+  pedido         Pedido   @relation(fields: [pedido_id], references: [id], onDelete: Cascade)
+}
+
+model TokenIntegracao {
+  id        String   @id @default(cuid())
+  titulo    String
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Pagamento {
+  id             String   @id @default(cuid())
+  pedido_id      String   @unique
+  mp_id          String?  @unique
+  status         String   @default("pending")
+  metodo         String?
+  valor          Float
+  moeda          String   @default("BRL")
+  idempotencyKey String   @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  pedido         Pedido   @relation(fields: [pedido_id], references: [id], onDelete: Cascade)
+}
+
+model Auditoria {
+  id        String   @id @default(cuid())
+  ip        String?
+  acao      String
+  endpoint  String?
+  resultado String?
+  userAgent String?
+  createdAt DateTime @default(now())
+}
+
+model RateLimit {
+  id        String   @id @default(cuid())
+  ip        String
+  endpoint  String
+  timestamp DateTime @default(now())
+
+  @@index([ip, endpoint, timestamp])
+}
+
+model SkuSequence {
+  id    Int @id @default(1)
+  valor Int @default(0)
+}
