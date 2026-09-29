@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Palladino Profumeria
 
-## Getting Started
+Loja de alta perfumaria italiana construída com Next.js 16, Prisma e
+Mercado Pago. Inclui vitrine, busca, carrinho, checkout, área do cliente,
+painel administrativo e um consultor virtual de recomendação.
 
-First, run the development server:
+## Requisitos
+
+- Node.js 20 ou superior
+- npm
+
+## Como rodar
 
 ```bash
+npm install
+cp .env.example .env     # preencha os valores (veja abaixo)
+npx prisma migrate dev   # cria o banco local
+npx prisma db seed       # cria o usuário administrador
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+A aplicação sobe em http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Variáveis de ambiente
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Todas ficam no `.env`, que **nunca** deve ser versionado. Use o
+`.env.example` como modelo.
 
-## Learn More
+| Variável | Obrigatória | Para quê |
+| --- | --- | --- |
+| `DATABASE_URL` | sim | Conexão do Prisma |
+| `JWT_SECRET` | sim | Assina as sessões. Mínimo de 32 caracteres |
+| `MP_ACCESS_TOKEN` | pagamentos | Token da conta Mercado Pago |
+| `MP_WEBHOOK_SECRET` | produção | Valida a assinatura dos webhooks |
+| `MELHOR_ENVIO_TOKEN` | frete | Cálculo de frete |
+| `CEP_ORIGEM` | frete | CEP de origem das remessas |
+| `GEMINI_API_KEY` | chatbot | Consultor virtual |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | seed | Administrador criado pelo seed |
 
-To learn more about Next.js, take a look at the following resources:
+Gere o `JWT_SECRET` com:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+openssl rand -base64 48
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+A aplicação não assina nem valida sessões sem essa variável — não existe
+valor padrão de propósito, para que um segredo publicado no código nunca
+possa ser usado para forjar uma sessão de administrador.
 
-## Deploy on Vercel
+## Notas de segurança
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Preços e estoque são sempre lidos do banco no checkout. O corpo da
+  requisição só informa o id do produto e a quantidade.
+- O webhook do Mercado Pago valida assinatura HMAC, consulta o pagamento
+  na origem e confere o valor antes de marcar um pedido como pago.
+- O login é limitado por IP para dificultar força bruta.
+- Nenhuma credencial deve ser escrita no código. Este repositório é
+  público.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Estrutura
+
+```
+src/app          rotas (App Router) e endpoints de API
+src/components   componentes de interface
+src/lib          autenticação, Prisma, Mercado Pago, chatbot
+src/services     frete, e-mail, pagamento, auditoria, segurança
+src/proxy.ts     proteção de rotas (Proxy do Next 16)
+prisma/          schema, migrações e seeds
+```
