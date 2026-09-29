@@ -1,6 +1,16 @@
 import { NextResponse } from 'next/server'
+import { z } from 'zod'
 import { requireAdminApi } from '@/lib/guard'
 import { prisma } from '@/lib/prisma'
+import { cifrar } from '@/lib/cripto'
+import { lerCorpo, respostaDeCorpoInvalido } from '@/lib/validacao'
+
+const atualizarSchema = z.object({
+  titulo: z.string().min(1, 'Título é obrigatório').max(120),
+  // Em branco significa "manter o token atual": a interface não recebe o
+  // valor em claro de volta, então não tem como reenviá-lo.
+  token: z.string().max(4096).optional(),
+})
 
 export async function PUT(request: Request, props: { params: Promise<{ id: string }> }) {
   try {
@@ -8,22 +18,23 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
     const auth = await requireAdminApi()
     if (auth.response) return auth.response
 
-    const { titulo, token } = await request.json()
+    const { titulo, token } = await lerCorpo(request, atualizarSchema)
 
-    if (!titulo || !token) {
-      return NextResponse.json({ error: 'Título e Token são obrigatórios' }, { status: 400 })
+    const dados: { titulo: string; token?: string } = { titulo }
+    if (token && token.trim()) {
+      dados.token = cifrar(token.trim())!
     }
 
-    const tokenAtualizado = await prisma.tokenIntegracao.update({
+    await prisma.tokenIntegracao.update({
       where: { id: params.id },
-      data: {
-        titulo,
-        token
-      }
+      data: dados,
     })
 
-    return NextResponse.json(tokenAtualizado)
+    // Não devolve o token, nem cifrado.
+    return NextResponse.json({ success: true })
   } catch (error) {
+    const r = respostaDeCorpoInvalido(error)
+    if (r) return r
     console.error('Erro ao atualizar token:', error)
     return NextResponse.json({ error: 'Erro ao atualizar token' }, { status: 500 })
   }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireAdminApi } from '@/lib/guard'
 import { prisma } from '@/lib/prisma'
+import { cifrar, decifrar } from '@/lib/cripto'
 
 export async function GET() {
   const auth = await requireAdminApi()
@@ -13,7 +14,11 @@ export async function GET() {
     const config = await prisma.configuracaoFrete.findFirst()
 
     // Máscara
-    const mascara = (str?: string | null) => str ? `${str.substring(0, 10)}...${str.substring(str.length - 10)}` : ''
+    // Decifra só para montar a máscara; o valor em claro nunca sai daqui.
+    const mascara = (str?: string | null) => {
+      const claro = decifrar(str)
+      return claro ? `${claro.substring(0, 6)}...${claro.substring(claro.length - 4)}` : ''
+    }
 
     return NextResponse.json({
       id: config?.id ?? null,
@@ -47,8 +52,10 @@ export async function PUT(request: Request) {
       clientId: data.clientId
     }
     
-    if (data.token && !data.token.includes('...')) updateData.token = data.token
-    if (data.clientSecret && !data.clientSecret.includes('...')) updateData.clientSecret = data.clientSecret
+    // Credenciais vão cifradas para o banco: o arquivo SQLite não deve
+    // conter o token do Melhor Envio em claro.
+    if (data.token && !data.token.includes('...')) updateData.token = cifrar(data.token)
+    if (data.clientSecret && !data.clientSecret.includes('...')) updateData.clientSecret = cifrar(data.clientSecret)
 
     const updated = await prisma.configuracaoFrete.update({
       where: { id: config.id },

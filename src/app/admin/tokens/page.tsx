@@ -5,7 +5,8 @@ import { useState, useEffect } from 'react'
 interface Token {
   id: string;
   titulo: string;
-  token: string;
+  /** Só as pontas. O token completo não sai do servidor. */
+  tokenMascarado: string;
   createdAt: string;
 }
 
@@ -39,7 +40,9 @@ export default function AdminTokens() {
   const handleOpenModal = (token?: Token) => {
     if (token) {
       setEditingToken(token)
-      setFormData({ titulo: token.titulo, token: token.token })
+      // O token em claro não vem do servidor. Em branco significa
+      // "manter o atual"; preencher substitui.
+      setFormData({ titulo: token.titulo, token: '' })
     } else {
       setEditingToken(null)
       setFormData({ titulo: '', token: '' })
@@ -124,7 +127,7 @@ export default function AdminTokens() {
                 <tr key={t.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
                   <td style={{ padding: '15px', fontSize: '0.9rem', fontWeight: 500 }}>{t.titulo}</td>
                   <td style={{ padding: '15px', fontSize: '0.9rem', color: '#64748b' }}>
-                    {t.token.substring(0, 15)}...
+                    {t.tokenMascarado}
                   </td>
                   <td style={{ padding: '15px', fontSize: '0.9rem' }}>{formatDate(t.createdAt)}</td>
                   <td style={{ padding: '15px', fontSize: '0.9rem', textAlign: 'right', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
@@ -176,9 +179,9 @@ export default function AdminTokens() {
               
               <div>
                 <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.85rem', fontWeight: 600, color: '#475569' }}>Token / Chave API</label>
-                <textarea 
-                  required
-                  placeholder="Cole o token aqui"
+                <textarea
+                  required={!editingToken}
+                  placeholder={editingToken ? "Deixe em branco para manter o token atual" : "Cole o token aqui"}
                   rows={4}
                   value={formData.token}
                   onChange={(e) => setFormData({...formData, token: e.target.value})}

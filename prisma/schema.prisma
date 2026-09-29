@@ -13,15 +13,59 @@ model User {
   email     String     @unique
   senha     String
   telefone  String?
+  /// Guardado cifrado (AES-256-GCM). Use src/lib/cripto.ts para ler/gravar.
   cpf       String?
   role      String     @default("CUSTOMER")
   ativo     Boolean    @default(true)
+
+  /// Segredo TOTP, cifrado. Nulo enquanto o 2FA não é configurado.
+  totpSecret     String?
+  /// Só vira true depois de o usuário confirmar um código válido.
+  totpAtivo      Boolean @default(false)
+  /// Códigos de recuperação, cifrados, separados por vírgula. Uso único.
+  totpBackup     String?
+
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   adminLogs AdminLog[]
   carrinhos Carrinho[]
   enderecos Endereco[]
   pedidos   Pedido[]
+  sessoes   Sessao[]
+  tokensSenha TokenSenha[]
+}
+
+/// Sessões emitidas. Sem isto o logout apenas apaga o cookie e o JWT
+/// continua válido até expirar; com a sessão registrada, o servidor pode
+/// revogá-la de imediato.
+model Sessao {
+  id         String   @id @default(cuid())
+  usuario_id String
+  /// SHA-256 do token. O JWT em si nunca é gravado.
+  tokenHash  String   @unique
+  userAgent  String?
+  ip         String?
+  expiraEm   DateTime
+  revogadaEm DateTime?
+  createdAt  DateTime @default(now())
+  usuario    User     @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@index([usuario_id])
+  @@index([expiraEm])
+}
+
+/// Token de redefinição de senha: uso único, expiração curta.
+model TokenSenha {
+  id         String   @id @default(cuid())
+  usuario_id String
+  /// SHA-256 do token enviado por e-mail. O valor em claro só existe no link.
+  tokenHash  String   @unique
+  expiraEm   DateTime
+  usadoEm    DateTime?
+  createdAt  DateTime @default(now())
+  usuario    User     @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@index([usuario_id])
 }
 
 model Endereco {

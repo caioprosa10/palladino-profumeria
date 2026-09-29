@@ -3,6 +3,7 @@ import { SecurityService } from '@/services/security.service'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { hashSenha, senhaSchema } from '@/lib/password'
+import { cifrar } from '@/lib/cripto'
 
 const registerSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
@@ -46,7 +47,7 @@ export async function POST(req: Request) {
         nome,
         email,
         senha: hashedPassword,
-        cpf,
+        cpf: cifrar(cpf),
         telefone,
       },
       select: {

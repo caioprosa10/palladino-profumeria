@@ -2,6 +2,7 @@ import { Navbar } from '@/components/layout/Navbar'
 import { cookies } from 'next/headers'
 import { decrypt } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { decifrar } from '@/lib/cripto'
 import { redirect } from 'next/navigation'
 import LogoutButton from './LogoutButton'
 
@@ -51,7 +52,7 @@ export default async function MinhaContaPage() {
               </div>
               <div>
                 <label style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', textTransform: 'uppercase' }}>CPF</label>
-                <p style={{ fontSize: '1rem' }}>{user.cpf || 'Não informado'}</p>
+                <p style={{ fontSize: '1rem' }}>{decifrar(user.cpf) || 'Não informado'}</p>
               </div>
               <div>
                 <label style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', textTransform: 'uppercase' }}>Telefone</label>

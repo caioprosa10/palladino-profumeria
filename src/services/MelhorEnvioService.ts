@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { decifrar } from '@/lib/cripto'
 
 export interface ShippingRequest {
   cepDestino: string;
@@ -36,7 +37,9 @@ export class MelhorEnvioService {
     const envAmbiente = process.env.MELHOR_ENVIO_ENV || 'production'
     const envCep = process.env.CEP_ORIGEM || '00000000'
 
-    const token = dbConfig?.token || envToken
+    // O token do banco é gravado cifrado; decifrar devolve valores antigos
+    // em claro como estão, então a migração dos dados pode ser gradual.
+    const token = decifrar(dbConfig?.token) || envToken
     const ambiente = dbConfig?.ambiente || envAmbiente
     const cepOrigem = dbConfig?.cepOrigem || envCep
 
