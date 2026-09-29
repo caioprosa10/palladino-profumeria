@@ -8,7 +8,7 @@ export class SecurityService {
    * @param endpoint O endpoint que está sendo acessado
    * @returns boolean - true se deve ser bloqueado, false se permitido
    */
-  static async checkRateLimit(ip: string, endpoint: string): Promise<boolean> {
+  static async checkRateLimit(ip: string, endpoint: string, limite = 5): Promise<boolean> {
     const windowStart = new Date(Date.now() - 15 * 60 * 1000); // Janela de 15 minutos
 
     const count = await prisma.rateLimit.count({
@@ -19,8 +19,9 @@ export class SecurityService {
       }
     });
 
-    // Limite de 5 requisições de pagamento por IP a cada 15 minutos
-    if (count >= 5) {
+    // Padrão: 5 requisições por IP a cada 15 minutos (usado em pagamento).
+    // O login usa um teto maior, já que escritórios compartilham um mesmo IP.
+    if (count >= limite) {
       return true; // Bloqueia
     }
 

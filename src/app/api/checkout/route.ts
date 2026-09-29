@@ -7,12 +7,44 @@ import { v4 as uuidv4 } from 'uuid';
 
 const client = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN as string });
 
+const MAX_QUANTIDADE_POR_ITEM = 99;
+
+/**
+ * Extrai apenas o id do produto e a quantidade do corpo da requisição.
+ * Preço, nome e disponibilidade vêm sempre do banco — nunca do cliente.
+ */
+function lerItensDoCarrinho(cart: unknown) {
+  if (!Array.isArray(cart) || cart.length === 0) {
+    throw new Error('Carrinho vazio.');
+  }
+
+  const porProduto = new Map<string, number>();
+
+  for (const item of cart as any[]) {
+    const produtoId = String(item?.produto?.id ?? item?.produto_id ?? '').trim();
+    const quantidade = Number(item?.quantidade);
+
+    if (!produtoId) {
+      throw new Error('Item do carrinho sem identificação de produto.');
+    }
+
+    if (!Number.isInteger(quantidade) || quantidade < 1 || quantidade > MAX_QUANTIDADE_POR_ITEM) {
+      throw new Error('Quantidade inválida no carrinho.');
+    }
+
+    // O mesmo produto pode chegar repetido; somamos para validar o estoque total.
+    porProduto.set(produtoId, (porProduto.get(produtoId) ?? 0) + quantidade);
+  }
+
+  return porProduto;
+}
+
 export async function POST(request: Request) {
   try {
     // 1. Verificação de Autenticação (Apenas usuários logados podem comprar)
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get('session')?.value;
-    
+
     if (!sessionCookie) {
       return NextResponse.json({ error: 'Você precisa estar logado para finalizar a compra.' }, { status: 401 });
     }
@@ -25,51 +57,74 @@ export async function POST(request: Request) {
     const userId = session.id as string;
 
     const body = await request.json();
-    const { cart, frete } = body;
+    const quantidadePorProduto = lerItensDoCarrinho(body?.cart);
 
     const host = request.headers.get('host') || 'localhost:3000';
     const protocol = host.includes('localhost') ? 'http' : 'https';
     const baseUrl = `${protocol}://${host}`;
 
-    let subtotal = 0;
-
-    const items = cart.map((item: any) => {
-      const preco = Number(item.produto.preco);
-      const qtd = Number(item.quantidade);
-
-      if (!Number.isFinite(preco) || !Number.isFinite(qtd)) {
-        throw new Error(`Valores inválidos no produto: ${item.produto.nome}`);
-      }
-
-      subtotal += preco * qtd;
-
-      return {
-        id: String(item.produto.id),
-        title: String(item.produto.nome),
-        quantity: qtd,
-        unit_price: preco, 
-        currency_id: 'BRL',
-      };
+    // 2. Busca os produtos reais. O preço cobrado é sempre o preço do banco,
+    // caso contrário o cliente poderia enviar qualquer valor no corpo da requisição.
+    const produtos = await prisma.produto.findMany({
+      where: { id: { in: [...quantidadePorProduto.keys()] }, ativo: true },
+      select: { id: true, nome: true, preco: true, estoque: true },
     });
 
-    const valorFrete = Number(frete) > 0 ? Number(frete) : 0;
-    if (!Number.isFinite(valorFrete)) {
-      throw new Error('Valor do frete inválido');
+    if (produtos.length !== quantidadePorProduto.size) {
+      return NextResponse.json(
+        { error: 'Um ou mais produtos do carrinho não estão mais disponíveis.' },
+        { status: 409 }
+      );
     }
 
-    if (valorFrete > 0) {
+    let subtotal = 0;
+    const items = [];
+
+    for (const produto of produtos) {
+      const quantidade = quantidadePorProduto.get(produto.id)!;
+
+      if (produto.estoque < quantidade) {
+        return NextResponse.json(
+          { error: `Estoque insuficiente para "${produto.nome}".` },
+          { status: 409 }
+        );
+      }
+
+      const preco = Number(produto.preco);
+      if (!Number.isFinite(preco) || preco <= 0) {
+        return NextResponse.json(
+          { error: `Produto "${produto.nome}" está com preço inválido.` },
+          { status: 409 }
+        );
+      }
+
+      subtotal += preco * quantidade;
+
       items.push({
-        id: 'frete',
-        title: 'Custo de Envio',
-        quantity: 1,
-        unit_price: valorFrete,
+        id: produto.id,
+        title: produto.nome,
+        quantity: quantidade,
+        unit_price: preco,
         currency_id: 'BRL',
       });
     }
 
-    const total = subtotal + valorFrete;
+    const valorFrete = Number(body?.frete);
+    const freteFinal = Number.isFinite(valorFrete) && valorFrete > 0 ? valorFrete : 0;
 
-    // 2. Criar Pedido no Banco de Dados ANTES de chamar o Mercado Pago
+    if (freteFinal > 0) {
+      items.push({
+        id: 'frete',
+        title: 'Custo de Envio',
+        quantity: 1,
+        unit_price: freteFinal,
+        currency_id: 'BRL',
+      });
+    }
+
+    const total = subtotal + freteFinal;
+
+    // 3. Criar Pedido no Banco de Dados ANTES de chamar o Mercado Pago
     // Usamos Transaction para garantir integridade
     const novoPedido = await prisma.$transaction(async (tx) => {
       const pedido = await tx.pedido.create({
@@ -77,13 +132,13 @@ export async function POST(request: Request) {
           usuario_id: userId,
           status: 'aguardando_pagamento',
           subtotal,
-          frete: valorFrete,
+          frete: freteFinal,
           total,
           itens: {
-            create: cart.map((item: any) => ({
-              produto_id: item.produto.id,
-              quantidade: Number(item.quantidade),
-              preco: Number(item.produto.preco),
+            create: produtos.map((produto) => ({
+              produto_id: produto.id,
+              quantidade: quantidadePorProduto.get(produto.id)!,
+              preco: Number(produto.preco),
             }))
           },
           // Cria o registro base de pagamento (mp_id ficará vazio até o webhook chegar)
@@ -104,7 +159,7 @@ export async function POST(request: Request) {
       return pedido;
     });
 
-    // 3. Criar a Preference no Mercado Pago, referenciando o ID do nosso banco
+    // 4. Criar a Preference no Mercado Pago, referenciando o ID do nosso banco
     const preferenceData: any = {
       body: {
         items: items,
@@ -114,7 +169,7 @@ export async function POST(request: Request) {
           pending: `${baseUrl}/pendente`
         },
         // O Mercado Pago retornará este ID no Webhook para sabermos de qual pedido se trata
-        external_reference: novoPedido.id, 
+        external_reference: novoPedido.id,
       }
     };
 
@@ -131,7 +186,7 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error('--- ERRO AO CRIAR PREFERÊNCIA ---', error);
     return NextResponse.json(
-      { error: 'Falha ao processar o pedido. Tente novamente mais tarde.' }, 
+      { error: 'Falha ao processar o pedido. Tente novamente mais tarde.' },
       { status: error.status || 500 }
     );
   }

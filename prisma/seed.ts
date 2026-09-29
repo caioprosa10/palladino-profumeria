@@ -5,7 +5,11 @@ const prisma = new PrismaClient()
 
 async function main() {
   const adminEmail = process.env.ADMIN_EMAIL || 'admin@dubaielixir.com'
-  const adminPassword = process.env.ADMIN_PASSWORD || '123456'
+  const adminPassword = process.env.ADMIN_PASSWORD
+
+  if (!adminPassword) {
+    throw new Error('Defina ADMIN_PASSWORD no .env antes de rodar o seed.')
+  }
   const hashedPassword = await bcrypt.hash(adminPassword, 10)
 
   await prisma.user.upsert({

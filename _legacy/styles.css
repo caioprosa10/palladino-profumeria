@@ -45,7 +45,7 @@ body {
     overflow-x: hidden;
     position: relative;
     
-    /* FUNDO LIMPO SEM OVERLAY - Apenas a Imagem Árabe */
+    /* FUNDO LIMPO SEM OVERLAY */
     background-image: url('background.jpg');
     background-size: cover;
     background-position: center;

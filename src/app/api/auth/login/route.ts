@@ -3,9 +3,22 @@ import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { encrypt } from '@/lib/auth'
 import { cookies } from 'next/headers'
+import { SecurityService } from '@/services/security.service'
 
 export async function POST(req: Request) {
   try {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1'
+
+    // Impede força bruta: sem isso, um atacante pode testar senhas
+    // indefinidamente contra a conta de administrador.
+    const bloqueado = await SecurityService.checkRateLimit(ip, '/api/auth/login', 10)
+    if (bloqueado) {
+      return NextResponse.json(
+        { error: 'Muitas tentativas de login. Aguarde alguns minutos e tente novamente.' },
+        { status: 429 }
+      )
+    }
+
     const { email, senha } = await req.json()
 
     if (!email || !senha) {

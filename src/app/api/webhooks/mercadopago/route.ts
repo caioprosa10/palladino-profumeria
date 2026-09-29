@@ -5,12 +5,20 @@ import { paymentClient } from '@/lib/mp';
 import { prisma } from '@/lib/prisma';
 import { EmailService } from '@/services/email.service';
 
-const MP_WEBHOOK_SECRET = process.env.MP_WEBHOOK_SECRET || 'test_secret';
+const MP_WEBHOOK_SECRET = process.env.MP_WEBHOOK_SECRET;
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 export async function POST(req: Request) {
   const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
   
   try {
+    // Em produção o segredo é obrigatório: sem ele não há como distinguir um
+    // webhook legítimo do Mercado Pago de um POST forjado marcando pedidos como pagos.
+    if (IS_PRODUCTION && !MP_WEBHOOK_SECRET) {
+      await AuditService.log({ acao: 'WEBHOOK_MISCONFIGURED', ip, endpoint: '/api/webhooks', resultado: 'MP_WEBHOOK_SECRET ausente' });
+      return NextResponse.json({ error: 'Webhook não configurado' }, { status: 500 });
+    }
+
     const signature = req.headers.get('x-signature') || '';
     const requestId = req.headers.get('x-request-id') || '';
     
@@ -19,9 +27,9 @@ export async function POST(req: Request) {
     const type = url.searchParams.get('type') || '';
 
     // 1. Validação Criptográfica HMAC
-    const isValid = SecurityService.verifyMercadoPagoSignature(signature, requestId, dataId, MP_WEBHOOK_SECRET);
+    const isValid = SecurityService.verifyMercadoPagoSignature(signature, requestId, dataId, MP_WEBHOOK_SECRET ?? '');
     
-    if (!isValid && process.env.NODE_ENV === 'production') {
+    if (!isValid && IS_PRODUCTION) {
       await AuditService.log({ acao: 'WEBHOOK_SIGNATURE_FAILED', ip, endpoint: '/api/webhooks', resultado: 'Assinatura Inválida' });
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

@@ -19,7 +19,7 @@ const montserrat = Montserrat({
 
 export const metadata: Metadata = {
   title: 'PALLADINO PROFUMERIA | Alta Profumeria Italiana',
-  description: 'Descubra a Palladino Profumeria, a essência do luxo invisível. Alta perfumaria feita para transcender o tempo.',
+  description: 'Descubra a Palladino Profumeria, a essência do luxo invisível. Alta perfumaria italiana feita para transcender o tempo.',
 }
 
 export default function RootLayout({

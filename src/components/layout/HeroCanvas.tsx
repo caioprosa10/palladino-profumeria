@@ -230,7 +230,7 @@ export function HeroCanvas() {
         <div className="hero-content">
           <h1 className="hero-title animate-reveal">Palladino Profumeria</h1>
           <h2 className="hero-subtitle animate-reveal" style={{ fontSize: '1.2rem', fontWeight: 300, marginBottom: '25px', letterSpacing: '1px', opacity: 0.9, transitionDelay: '0.6s' }}>
-            O luxo da perfumaria árabe em cada fragrância.
+            O luxo da alta perfumaria italiana em cada fragrância.
           </h2>
           <p className="hero-description animate-reveal">
             Perfumes originais, alta fixação e sofisticação para todos os momentos.
