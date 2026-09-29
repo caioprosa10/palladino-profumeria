@@ -212,7 +212,7 @@ export function HeroCanvas() {
       {!isLoaded && (
         <div id="loader" className="loader-container" ref={loaderRef}>
           <div className="loader-content">
-            <h2 className="loader-brand">DUBAI ELIXIR</h2>
+            <h2 className="loader-brand">PALLADINO</h2>
             <div className="loader-bar-container">
               <div id="loader-bar" className="loader-bar" ref={loaderBarRef}></div>
             </div>
@@ -228,7 +228,7 @@ export function HeroCanvas() {
         </div>
 
         <div className="hero-content">
-          <h1 className="hero-title animate-reveal">Dubai Elixir</h1>
+          <h1 className="hero-title animate-reveal">Palladino Profumeria</h1>
           <h2 className="hero-subtitle animate-reveal" style={{ fontSize: '1.2rem', fontWeight: 300, marginBottom: '25px', letterSpacing: '1px', opacity: 0.9, transitionDelay: '0.6s' }}>
             O luxo da perfumaria árabe em cada fragrância.
           </h2>
@@ -242,7 +242,7 @@ export function HeroCanvas() {
             <span className="mouse-icon">
               <span className="mouse-wheel"></span>
             </span>
-            <span className="hint-text">DUBAI ELIXIR AUTOMATIQUE</span>
+            <span className="hint-text">PALLADINO AUTOMATIQUE</span>
           </div>
         </div>
       </main>

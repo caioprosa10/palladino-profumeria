@@ -22,7 +22,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside style={{ width: '260px', backgroundColor: '#0f172a', color: '#f1f5f9', display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
           <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: '#fff' }}>
-            <span style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', letterSpacing: '0.1em' }}>DUBAI ELIXIR</span>
+            <span style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', letterSpacing: '0.1em' }}>PALLADINO</span>
           </Link>
           <div style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '5px' }}>Painel Administrativo</div>
         </div>

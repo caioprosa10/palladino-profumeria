@@ -77,7 +77,7 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
 
     // Impedir que o SuperAdmin exclua a si mesmo
     const userToVerify = await prisma.user.findUnique({ where: { id: params.id } })
-    if (userToVerify?.email === 'admin@dubai.com') {
+    if (userToVerify?.role === 'SUPERADMIN') {
       return NextResponse.json({ error: 'Não é possível excluir o Administrador Principal' }, { status: 403 })
     }
 

@@ -77,7 +77,7 @@ export class PaymentService {
       body: {
         transaction_amount: total, // USANDO O VALOR RECALCULADO NO SERVIDOR (IGNORANDO FRONT)
         token: params.token, // Token one-time gerado pelo MercadoPago.js (Nunca dados do cartão)
-        description: 'Compra Dubai Elixir',
+        description: 'Compra Palladino Profumeria',
         installments: params.installments,
         payment_method_id: params.payment_method_id,
         issuer_id: params.issuer_id ? Number(params.issuer_id) : undefined,

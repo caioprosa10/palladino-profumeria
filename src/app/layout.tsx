@@ -18,8 +18,8 @@ const montserrat = Montserrat({
 })
 
 export const metadata: Metadata = {
-  title: 'DUBAI ELIXIR | Haute Parfumerie',
-  description: 'Descubra Dubai Elixir, a essência do luxo invisível. Alta perfumaria feita para transcender o tempo.',
+  title: 'PALLADINO PROFUMERIA | Alta Profumeria Italiana',
+  description: 'Descubra a Palladino Profumeria, a essência do luxo invisível. Alta perfumaria feita para transcender o tempo.',
 }
 
 export default function RootLayout({

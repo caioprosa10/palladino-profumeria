@@ -82,7 +82,7 @@ export function ProductDetailsClient({ produto, relatedProducts }: ProductDetail
     try {
       await navigator.share({
         title: produto.nome,
-        text: `Confira ${produto.nome} na Dubai Elixir`,
+        text: `Confira ${produto.nome} na Palladino Profumeria`,
         url: window.location.href,
       })
     } catch (err) {

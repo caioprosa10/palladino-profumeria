@@ -126,7 +126,7 @@ export function Chatbot() {
             }}>
               <div>
                 <strong style={{ display: 'block', color: '#0f172a', fontSize: '1.05rem', fontFamily: 'var(--font-serif)' }}>{p.nome}</strong>
-                <span style={{ fontSize: '0.8rem', color: '#d4af37', fontWeight: 600 }}>{p.marca?.nome || 'Dubai Elixir'}</span>
+                <span style={{ fontSize: '0.8rem', color: '#d4af37', fontWeight: 600 }}>{p.marca?.nome || 'Palladino Profumeria'}</span>
               </div>
               <span style={{ fontSize: '0.85rem', color: '#475569', lineHeight: '1.4' }}>{p.descricao_curta || p.fragrancia}</span>
               
@@ -217,7 +217,7 @@ export function Chatbot() {
                 <Bot size={22} />
               </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontFamily: 'var(--font-serif)', letterSpacing: '0.5px' }}>Consultor Elixir</h3>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontFamily: 'var(--font-serif)', letterSpacing: '0.5px' }}>Consultor Palladino</h3>
                 <p style={{ margin: 0, fontSize: '0.75rem', color: '#cbd5e1' }}>Especialista em Perfumaria e Cosméticos</p>
               </div>
             </div>

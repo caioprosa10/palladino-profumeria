@@ -10,9 +10,9 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const STORE_NAME = 'Dubai Elixir';
-const STORE_EMAIL = 'contato@dubaielixir.com.br';
-const LOGO_URL = 'https://dubaielixir.com.br/logo.png'; // Substituir pela URL real
+const STORE_NAME = 'Palladino Profumeria';
+const STORE_EMAIL = 'contato@palladinoprofumeria.com.br';
+const LOGO_URL = 'https://palladinoprofumeria.com.br/logo-palladino.png'; // Substituir pela URL real
 
 export class EmailService {
   
@@ -53,7 +53,7 @@ export class EmailService {
 
   static async sendOrderConfirmed(to: string, userName: string, orderId: string, total: number) {
     const html = this.baseHtml('Confirmação de Pedido', `
-      <h2>Seu pedido foi confirmado na Dubai Elixir ✨</h2>
+      <h2>Seu pedido foi confirmado na Palladino Profumeria ✨</h2>
       <p>Olá <strong>${userName}</strong>,</p>
       <p>Agradecemos pela sua compra! O seu pagamento foi processado com sucesso e nós já estamos separando o seu pedido.</p>
       <div style="background: #f9f9f9; padding: 20px; margin: 20px 0; border-radius: 4px; border: 1px solid #eee;">
@@ -62,14 +62,14 @@ export class EmailService {
       </div>
       <p>Você receberá um novo e-mail assim que o seu pedido for enviado.</p>
       <div style="text-align: center;">
-        <a href="https://dubaielixir.com.br/cliente" class="btn" style="color: #ffffff;">Acompanhar Pedido</a>
+        <a href="https://palladinoprofumeria.com.br/cliente" class="btn" style="color: #ffffff;">Acompanhar Pedido</a>
       </div>
     `);
 
     return transporter.sendMail({
       from: `"${STORE_NAME}" <${STORE_EMAIL}>`,
       to,
-      subject: 'Seu pedido foi confirmado na Dubai Elixir ✨',
+      subject: 'Seu pedido foi confirmado na Palladino Profumeria ✨',
       html
     });
   }
@@ -118,9 +118,9 @@ export class EmailService {
       <h2>Esperamos que você aproveite sua nova fragrância.</h2>
       <p>Olá <strong>${userName}</strong>,</p>
       <p>O seu pedido <strong>#${orderId}</strong> consta como entregue em nosso sistema.</p>
-      <p>Gostaríamos de agradecer por escolher a Dubai Elixir. Se você amou a sua experiência, adoraríamos saber! Avalie-nos em nosso site.</p>
+      <p>Gostaríamos de agradecer por escolher a Palladino Profumeria. Se você amou a sua experiência, adoraríamos saber! Avalie-nos em nosso site.</p>
       <div style="text-align: center;">
-        <a href="https://dubaielixir.com.br" class="btn" style="color: #ffffff;">Voltar para a Loja</a>
+        <a href="https://palladinoprofumeria.com.br" class="btn" style="color: #ffffff;">Voltar para a Loja</a>
       </div>
     `);
 

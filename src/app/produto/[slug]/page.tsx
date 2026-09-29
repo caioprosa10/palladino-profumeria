@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!produto) return { title: 'Produto não encontrado' }
   
   return {
-    title: `${produto.nome} - Dubai Elixir`,
+    title: `${produto.nome} - Palladino Profumeria`,
     description: produto.descricao_curta || produto.nome,
   }
 }

@@ -72,7 +72,7 @@ function CadastroContent() {
     <div style={{ maxWidth: '500px', margin: '0 auto', width: '100%' }}>
       <div style={{ textAlign: 'center', marginBottom: '40px' }}>
         <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.5rem', marginBottom: '10px' }}>Criar Conta</h1>
-        <p style={{ color: 'var(--color-text-secondary)' }}>Junte-se à Dubai Elixir e acesse benefícios exclusivos.</p>
+        <p style={{ color: 'var(--color-text-secondary)' }}>Junte-se à Palladino Profumeria e acesse benefícios exclusivos.</p>
       </div>
 
       {error && (

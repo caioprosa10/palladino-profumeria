@@ -28,17 +28,17 @@ export function Navbar() {
     <header className="main-header">
       <div className="logo" style={{ position: 'relative' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-          {/* Placeholder invisível para empurrar o texto DUBAI ELIXIR e preservar o layout original */}
+          {/* Placeholder invisível para empurrar o texto PALLADINO e preservar o layout original */}
           <div style={{ width: '88px', height: '10px', marginRight: '15px', flexShrink: 0 }}></div>
           <Image 
-            src="/logo-new.png" 
-            alt="Dubai Elixir Logo" 
+            src="/logo-palladino.png" 
+            alt="Palladino Profumeria" 
             width={88} 
             height={88} 
             className="floating-logo"
             style={{ position: 'absolute', top: '11px', left: 0, zIndex: 110, objectFit: 'contain' }}
           />
-          <span style={{ position: 'relative', zIndex: 10 }}>DUBAI ELIXIR</span>
+          <span style={{ position: 'relative', zIndex: 10 }}>PALLADINO</span>
         </Link>
       </div>
       <nav className="nav-links">

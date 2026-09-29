@@ -29,7 +29,7 @@ export default function AdminFinanceiroClient({ children }: { children: React.Re
       
       // Cabeçalho
       doc.setFontSize(20)
-      doc.text('Dubai Elixir', 14, 22)
+      doc.text('Palladino Profumeria', 14, 22)
       doc.setFontSize(12)
       doc.setTextColor(100)
       doc.text('Relatório Financeiro Consolidado', 14, 32)
@@ -65,7 +65,7 @@ export default function AdminFinanceiroClient({ children }: { children: React.Re
       doc.setTextColor(15, 23, 42)
       doc.text(`Total Faturado no Período: ${formatCurrency(totalFaturado)}`, 14, finalY + 15)
 
-      doc.save(`Dubai_Elixir_Financeiro_${new Date().getTime()}.pdf`)
+      doc.save(`Palladino_Financeiro_${new Date().getTime()}.pdf`)
 
     } catch (error) {
       console.error(error)
@@ -106,7 +106,7 @@ export default function AdminFinanceiroClient({ children }: { children: React.Re
       ]
       worksheet['!cols'] = wscols
 
-      XLSX.writeFile(workbook, `Dubai_Elixir_Financeiro_${new Date().getTime()}.xlsx`)
+      XLSX.writeFile(workbook, `Palladino_Financeiro_${new Date().getTime()}.xlsx`)
 
     } catch (error) {
       console.error(error)

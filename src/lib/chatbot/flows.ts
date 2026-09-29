@@ -39,7 +39,7 @@ export const CHATBOT_QUESTIONS: Record<string, QuestionConfig> = {
 };
 
 export const CHATBOT_MESSAGES = {
-  greeting: "Olá! 👋 Sou o Consultor Virtual da Dubai Elixir. Vou ajudar você a encontrar o produto perfeito no nosso catálogo.",
+  greeting: "Olá! 👋 Sou o Consultor Virtual da Palladino Profumeria. Vou ajudar você a encontrar o produto perfeito no nosso catálogo.",
   fallback: "Desculpe, não consegui identificar sua preferência. Por favor, escolha uma das opções abaixo.",
   error: "Houve um problema de conexão. Por favor, tente novamente."
 };
