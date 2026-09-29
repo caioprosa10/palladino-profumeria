@@ -30,8 +30,10 @@ services:
       - key: JWT_SECRET
         generateValue: true
 
+      # Alinhado ao Node usado em desenvolvimento e exigido pelas
+      # ferramentas de teste.
       - key: NODE_VERSION
-        value: "20"
+        value: "24"
 
       # Preencha pelo painel do Render (marcadas como sync:false para não
       # ficarem escritas neste arquivo, que é público).

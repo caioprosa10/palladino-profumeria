@@ -51,3 +51,8 @@ cookies.txt
 test-*.js
 test-*.ts
 test_*.js
+
+# artefatos de teste
+tests/.tmp/
+coverage/
+prisma/backups/
