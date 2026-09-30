@@ -16,7 +16,7 @@
     "migrar:cripto": "tsx scripts/migrar-criptografia.ts"
   },
   "dependencies": {
-    "@prisma/client": "^5.22.0",
+    "@prisma/client": "^7.10.0",
     "bcryptjs": "^3.0.3",
     "jose": "^6.2.3",
     "jspdf": "^4.2.1",
