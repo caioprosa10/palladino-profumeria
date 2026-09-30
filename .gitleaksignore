@@ -1,0 +1,21 @@
+# Achados revisados e aceitos, por impressão digital
+# (<commit>:<arquivo>:<regra>:<linha>).
+#
+# Só entram aqui valores que nunca foram credencial real. Segredo
+# verdadeiro que vaze não se resolve com allowlist: resolve-se revogando a
+# chave e limpando o histórico, como foi feito com o token do Mercado Pago.
+#
+# Os dois casos abaixo são placeholders de alta entropia que o gitleaks
+# não tem como distinguir de uma chave de verdade. Ambos já foram
+# substituídos por geração em tempo de execução na árvore atual; as
+# entradas existem porque o histórico é imutável.
+
+# Chave de exemplo no workflow de CI, antes de passar a ser gerada com
+# `openssl rand` a cada execução. Nunca protegeu nada: o banco do CI é um
+# arquivo temporário descartado no fim do job.
+7ce0eb9c759925fd505d38119b8e80c66e17deb2:.github/workflows/ci.yml:generic-api-key:33
+
+# Chave fixa em tests/setup.ts, antes de passar a ser gerada com
+# crypto.randomBytes por execução. Cifrava apenas o banco de testes em
+# tests/.tmp, que a própria suíte cria e apaga.
+29854e242f8d137e40800ddcb61577c792509c96:tests/setup.ts:generic-api-key:19

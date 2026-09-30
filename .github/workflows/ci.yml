@@ -25,14 +25,6 @@ jobs:
   verificar:
     runs-on: ubuntu-latest
 
-    env:
-      # Valores só para o build e os testes rodarem. Não são segredos: o
-      # banco é um arquivo temporário e as chaves não protegem nada aqui.
-      DATABASE_URL: file:./ci.db
-      JWT_SECRET: chave-de-ci-somente-com-mais-de-32-caracteres
-      ENCRYPTION_KEY: Y2ktZW5jcnlwdGlvbi1rZXktMzItYnl0ZXMtb2shIQ==
-      APP_URL: http://localhost:3000
-
     steps:
       - uses: actions/checkout@v5
         with:
@@ -41,12 +33,38 @@ jobs:
 
       - uses: actions/setup-node@v5
         with:
+          # Mesma versão de render.yaml e do desenvolvimento.
           node-version: '24'
           cache: npm
+
+      # Segredos gerados por execução, nunca escritos no repositório.
+      #
+      # A primeira versão deste arquivo trazia os valores literais, e o
+      # gitleaks os apontou como segredo vazado — corretamente, porque um
+      # valor com entropia alta num arquivo versionado é indistinguível de
+      # uma chave real. Gerar aqui resolve os dois lados: não há nada para
+      # o scanner achar, e cada execução usa um valor descartável.
+      - name: Gerar segredos descartáveis
+        run: |
+          JWT="$(openssl rand -base64 48 | tr -d '\n')"
+          ENC="$(openssl rand -base64 32 | tr -d '\n')"
+
+          # Mascara nos logs: as etapas seguintes imprimem o bloco env.
+          echo "::add-mask::$JWT"
+          echo "::add-mask::$ENC"
+
+          {
+            echo "JWT_SECRET=$JWT"
+            echo "ENCRYPTION_KEY=$ENC"
+            echo "APP_URL=http://localhost:3000"
+            # SQLite temporário, na área descartável do runner.
+            echo "DATABASE_URL=file:$RUNNER_TEMP/ci.db"
+          } >> "$GITHUB_ENV"
 
       - name: Instalar dependências
         run: npm ci
 
+      # Antes de tsc e do build: os dois dependem dos tipos gerados.
       - name: Gerar o cliente do Prisma
         run: npx prisma generate
 

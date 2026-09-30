@@ -10,15 +10,38 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
-    # Agrupa as atualizações de rotina num PR só, para que os avisos de
-    # segurança não se perdam no meio do ruído.
+    labels: ["dependencias"]
+
     groups:
+      # Agrupa as atualizações de rotina num PR só, para que os avisos de
+      # segurança não se perdam no meio do ruído.
       dependencias-de-rotina:
         patterns: ["*"]
         update-types: ["minor", "patch"]
-    labels: ["dependencias"]
+
+      # prisma e @prisma/client precisam andar juntos: o CLI gera o código
+      # que o cliente carrega. Subir só o cliente deixou o CI com
+      # "Cannot find module generator-build/index.js".
+      prisma:
+        patterns: ["prisma", "@prisma/client"]
+
+    ignore:
+      # Majors bloqueados por acoplamento, não por preguiça. Cada um tem
+      # um motivo concreto, verificado no CI:
+      #
+      # typescript 7 — typescript-eslint recusa: "does not support TS 7.0".
+      # eslint 10    — o plugin react do eslint-config-next quebra com
+      #                "contextOrFilename.getFilename is not a function".
+      #
+      # Os dois só podem subir quando eslint-config-next acompanhar, e ele
+      # é fixado na versão do Next. Revisar ao atualizar o Next.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
       interval: monthly
+    labels: ["dependencias"]
