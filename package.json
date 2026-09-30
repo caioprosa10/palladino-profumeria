@@ -16,7 +16,7 @@
     "migrar:cripto": "tsx scripts/migrar-criptografia.ts"
   },
   "dependencies": {
-    "@prisma/client": "^5.22.0",
+    "@prisma/client": "^7.10.0",
     "bcryptjs": "^3.0.3",
     "jose": "^6.2.3",
     "jspdf": "^4.2.1",
@@ -46,7 +46,7 @@
     "@vitest/coverage-v8": "^5.0.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
-    "prisma": "^5.22.0",
+    "prisma": "^7.10.0",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "tsx": "^4.23.15",
