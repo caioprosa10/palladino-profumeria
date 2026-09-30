@@ -21,13 +21,13 @@ SQLite entregaria esses dados legíveis.
 2. Simule primeiro, para ver quanto seria alterado:
 
    ```bash
-   npx tsx scripts/migrar-criptografia.ts --dry-run
+   npm run migrar:cripto -- --dry-run
    ```
 
 3. Aplique:
 
    ```bash
-   npx tsx scripts/migrar-criptografia.ts
+   npm run migrar:cripto
    ```
 
 O script faz um backup do banco com `VACUUM INTO` antes de qualquer
@@ -55,7 +55,7 @@ ver *Restauração* abaixo.
 ### Backup manual
 
 ```bash
-npx tsx scripts/backup.ts
+npm run backup
 ```
 
 Gera uma cópia consistente com `VACUUM INTO` — nunca uma cópia bruta do
@@ -72,8 +72,12 @@ Variáveis:
 ### Restauração
 
 ```bash
-npx tsx scripts/restaurar.ts /data/backups/backup-<data>.db.enc --destino /tmp/teste.db
+npm run restaurar -- /data/backups/backup-<data>.db.enc --destino /tmp/teste.db
 ```
+
+A restauração confere `PRAGMA integrity_check` e conta tabelas, produtos e
+usuários, para você ver que o conteúdo voltou — não apenas que o arquivo
+abriu.
 
 Sem `--destino`, restaura sobre o banco atual e pede confirmação.
 **Pare a aplicação antes de restaurar sobre o banco em uso.**
@@ -124,7 +128,7 @@ Depois de algumas semanas sem falso positivo nos relatórios, endureça para
 ## Senha do administrador
 
 ```bash
-npx tsx scripts/redefinir-senha-admin.ts
+npm run senha:admin
 ```
 
 Pede a senha com entrada oculta, exige a mesma força do cadastro público e
@@ -141,3 +145,36 @@ As que afetam cabeçalhos HTTP — `DISABLE_HTTPS_UPGRADE`,
 `TURNSTILE_SITE_KEY` — são lidas por `next.config.ts`, que o Next resolve
 **durante o build** e grava em `routes-manifest.json`. Definir só em tempo
 de execução não tem efeito: precisam existir no build.
+
+---
+
+## Testes e integração contínua
+
+```bash
+npm test          # suíte completa
+npm run test:watch
+```
+
+O banco de testes é um arquivo próprio em `tests/.tmp/`, criado e
+descartado pela suíte. Nunca toca o banco de desenvolvimento nem o de
+produção.
+
+`.github/workflows/ci.yml` roda a cada push na main, em pull request e
+semanalmente: lint, verificação de tipos, testes, build,
+`npm audit --audit-level=high` e varredura de segredos com gitleaks.
+
+A auditoria falha em vulnerabilidade **alta ou crítica**. Moderadas e
+baixas aparecem no log sem interromper — costumam estar em dependência de
+desenvolvimento, e travar a entrega por elas faz o time ignorar o CI.
+
+### Sobre os avisos de lint
+
+O lint passa sem erros, mas emite cerca de 86 avisos herdados: usos de
+`any` e variáveis não usadas de antes de haver lint no CI. Ficaram como
+aviso de propósito — visíveis, sem reprovar toda execução. Para reduzir:
+`npx eslint --fix`, depois arquivo por arquivo com os testes rodando.
+
+Três pontos têm `eslint-disable` com a justificativa escrita ao lado:
+busca de dados em `useEffect` no painel, que só sai com refatoração para
+Server Component, e o padrão "montado" do checkout, necessário porque o
+carrinho vem do `localStorage`.

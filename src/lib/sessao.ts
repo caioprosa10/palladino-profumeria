@@ -88,14 +88,16 @@ export async function sessaoAtual(): Promise<SessaoValida | null> {
       select: { id: true, email: true, nome: true, role: true, ativo: true },
     })
     if (!usuario || !usuario.ativo) return null
-    const { ativo, ...dados } = usuario
+
+    // `ativo` não faz parte da sessão devolvida; só serviu para o teste acima.
+    const { ativo: _ativo, ...dados } = usuario
     return dados
   }
 
   if (registro.revogadaEm || registro.expiraEm < new Date()) return null
   if (!registro.usuario.ativo) return null
 
-  const { ativo, ...dados } = registro.usuario
+  const { ativo: _ativo, ...dados } = registro.usuario
   return dados
 }
 

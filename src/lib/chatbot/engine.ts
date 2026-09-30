@@ -6,7 +6,7 @@ export class RecommendationEngine {
     // ---------------------------------------------------------
     // BARREIRA 1: CATEGORIA E GÊNERO (INTRANSPONÍVEIS)
     // ---------------------------------------------------------
-    let validProducts = products.filter(p => {
+    const validProducts = products.filter(p => {
       // 1. Filtro de Categoria
       if (prefs.categoria) {
         const pCat = (p.categoria?.slug || '').toLowerCase();

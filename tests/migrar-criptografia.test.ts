@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest'
 import { execSync } from 'child_process'
 import fs from 'fs'
-import path from 'path'
 import { PrismaClient } from '@prisma/client'
 import { estaCifrado, decifrar } from '@/lib/cripto'
 import { migrar, fazerBackup } from '../scripts/migrar-criptografia'

@@ -16,7 +16,7 @@
 
 import fs from 'fs'
 import path from 'path'
-import { PrismaClient } from '@prisma/client'
+import { Prisma, PrismaClient } from '@prisma/client'
 import { cifrar, decifrar, estaCifrado } from '../src/lib/cripto'
 
 const LOTE = 100
@@ -26,7 +26,8 @@ interface Campo {
   coluna: string
   /** Lê os registros que ainda não estão cifrados. */
   carregar: (prisma: PrismaClient) => Promise<{ id: string; valor: string }[]>
-  gravar: (prisma: PrismaClient, id: string, valor: string) => Promise<unknown>
+  /** Devolve PrismaPromise para poder entrar num $transaction em lote. */
+  gravar: (prisma: PrismaClient, id: string, valor: string) => Prisma.PrismaPromise<unknown>
   ler: (prisma: PrismaClient, id: string) => Promise<string | null>
 }
 
@@ -160,7 +161,7 @@ export async function migrar(
 
       // Transação por lote: uma falha no meio não deixa metade cifrada.
       await prisma.$transaction(
-        lote.map(({ id, valor }) => campo.gravar(prisma, id, cifrar(valor)!) as any)
+        lote.map(({ id, valor }) => campo.gravar(prisma, id, cifrar(valor)!))
       )
 
       // Releitura: confirma que o que foi gravado decifra para o original.

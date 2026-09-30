@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Product, useCartStore } from "@/store/cartStore"
 import { ChevronRight, Minus, Plus, Share2, Truck, Star, Info, ShieldCheck, Droplets } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -112,9 +113,9 @@ export function ProductDetailsClient({ produto, relatedProducts }: ProductDetail
     <div style={{ padding: '140px 20px 60px', maxWidth: '1200px', margin: '0 auto' }}>
       {/* Breadcrumb */}
       <nav style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <a href="/" style={{ color: '#0f172a', textDecoration: 'none' }}>Home</a>
+        <Link href="/" style={{ color: '#0f172a', textDecoration: 'none' }}>Home</Link>
         <ChevronRight size={14} />
-        <a href={`/categoria/${produto.categoria?.slug}`} style={{ color: '#0f172a', textDecoration: 'none' }}>{produto.categoria?.nome}</a>
+        <Link href={`/categoria/${produto.categoria?.slug}`} style={{ color: '#0f172a', textDecoration: 'none' }}>{produto.categoria?.nome}</Link>
         <ChevronRight size={14} />
         <span>{produto.nome}</span>
       </nav>

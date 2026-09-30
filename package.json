@@ -9,7 +9,11 @@
     "db:seed": "prisma db seed",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "senha:admin": "tsx scripts/redefinir-senha-admin.ts",
+    "backup": "tsx scripts/backup.ts",
+    "restaurar": "tsx scripts/restaurar.ts",
+    "migrar:cripto": "tsx scripts/migrar-criptografia.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

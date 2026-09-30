@@ -1,0 +1,74 @@
+name: CI
+
+# Roda em toda alteração da main e em todo pull request. O objetivo é que
+# nada chegue à main sem passar por lint, testes, auditoria de
+# dependências e varredura de segredos.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Vulnerabilidade nova não espera commit: a auditoria roda semanalmente
+  # mesmo sem alteração no código.
+  schedule:
+    - cron: '0 6 * * 1'
+
+# Cancela execuções antigas do mesmo branch, para não gastar fila.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+
+    env:
+      # Valores só para o build e os testes rodarem. Não são segredos: o
+      # banco é um arquivo temporário e as chaves não protegem nada aqui.
+      DATABASE_URL: file:./ci.db
+      JWT_SECRET: chave-de-ci-somente-com-mais-de-32-caracteres
+      ENCRYPTION_KEY: Y2ktZW5jcnlwdGlvbi1rZXktMzItYnl0ZXMtb2shIQ==
+      APP_URL: http://localhost:3000
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # gitleaks precisa do histórico para varrer commits anteriores.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Gerar o cliente do Prisma
+        run: npx prisma generate
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Verificação de tipos
+        run: npx tsc --noEmit
+
+      - name: Testes
+        run: npm test
+
+      - name: Build
+        run: npx next build
+
+      # Falha em vulnerabilidade alta ou crítica. Moderadas e baixas
+      # aparecem no log sem interromper, para não travar a entrega por
+      # algo que costuma estar em dependência de desenvolvimento.
+      - name: Auditoria de dependências
+        run: npm audit --audit-level=high
+
+      - name: Varredura de segredos
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

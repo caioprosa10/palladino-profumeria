@@ -19,10 +19,6 @@ export default function AdminTokens() {
   const [formData, setFormData] = useState({ titulo: '', token: '' })
   const [submitting, setSubmitting] = useState(false)
 
-  useEffect(() => {
-    fetchTokens()
-  }, [])
-
   const fetchTokens = async () => {
     try {
       const res = await fetch('/api/admin/tokens')
@@ -36,6 +32,16 @@ export default function AdminTokens() {
       setLoading(false)
     }
   }
+
+  // Busca ao montar. Resolver sem efeito exigiria mover a carga para um
+  // Server Component e passar os dados por prop — refatoração de
+  // arquitetura, não ajuste local. Desativado aqui de propósito, para a
+  // regra continuar valendo no resto do projeto.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchTokens()
+  }, [])
+
 
   const handleOpenModal = (token?: Token) => {
     if (token) {

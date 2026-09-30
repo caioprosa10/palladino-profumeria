@@ -17,10 +17,6 @@ export default function ConfigFretePage() {
   const [testing, setTesting] = useState(false)
   const [status, setStatus] = useState<'idle' | 'connected' | 'disconnected'>('idle')
 
-  useEffect(() => {
-    fetchConfig()
-  }, [])
-
   const fetchConfig = async () => {
     try {
       const res = await fetch('/api/admin/config-frete')
@@ -44,6 +40,16 @@ export default function ConfigFretePage() {
       setLoading(false)
     }
   }
+
+  // Busca ao montar. Resolver sem efeito exigiria mover a carga para um
+  // Server Component e passar os dados por prop — refatoração de
+  // arquitetura, não ajuste local. Desativado aqui de propósito, para a
+  // regra continuar valendo no resto do projeto.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchConfig()
+  }, [])
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

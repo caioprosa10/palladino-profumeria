@@ -43,7 +43,7 @@ export function Chatbot() {
 
     let nextStep: ChatbotStep = 'RECOMMENDATION'
     let nextQ: QuestionConfig | null = null
-    let newPrefs = { ...preferences }
+    const newPrefs = { ...preferences }
 
     if (currentStep === 'CATEGORY') {
       const cat = matchedValue || 'perfumes'

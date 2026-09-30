@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useCallback, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 
 const CHAVE = 'palladino_cookies_v1'
@@ -18,15 +18,32 @@ const CHAVE = 'palladino_cookies_v1'
  * no banco exigiria identificar a pessoa antes de ela consentir.
  */
 export function AvisoCookies() {
-  const [visivel, setVisivel] = useState(false)
+  // Um contador só para avisar o React de que o valor externo mudou.
+  const [versao, setVersao] = useState(0)
 
-  useEffect(() => {
-    try {
-      if (!localStorage.getItem(CHAVE)) setVisivel(true)
-    } catch {
-      // Navegador com armazenamento bloqueado: não insistir.
-    }
-  }, [])
+  const inscrever = useCallback(() => () => {}, [])
+
+  /**
+   * useSyncExternalStore é a API do React para ler estado que não é dele —
+   * aqui, o localStorage. Um useEffect com setState funcionaria, mas
+   * dispara um render a mais e a regra react-hooks/set-state-in-effect
+   * existe justamente para apontar isso.
+   */
+  const jaCiente = useSyncExternalStore(
+    inscrever,
+    () => {
+      void versao
+      try {
+        return Boolean(localStorage.getItem(CHAVE))
+      } catch {
+        // Armazenamento bloqueado: não insistir com o aviso.
+        return true
+      }
+    },
+    // No servidor não há localStorage. Assumir "já ciente" evita que o
+    // aviso apareça no HTML e desapareça na hidratação.
+    () => true
+  )
 
   const aceitar = () => {
     try {
@@ -34,10 +51,10 @@ export function AvisoCookies() {
     } catch {
       // Sem onde guardar; apenas fecha nesta visita.
     }
-    setVisivel(false)
+    setVersao((v) => v + 1)
   }
 
-  if (!visivel) return null
+  if (jaCiente) return null
 
   return (
     <div

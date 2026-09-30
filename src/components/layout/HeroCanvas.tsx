@@ -119,7 +119,7 @@ export function HeroCanvas() {
       }
       
       // Zoom em 1.00 (sem escala artificial adicional), garantindo o respiro máximo da imagem original que preenche a tela
-      let scale = 1.00 
+      const scale = 1.00 
       const newWidth = drawWidth * scale
       const newHeight = drawHeight * scale
       // Âncora 49% para manter coerência

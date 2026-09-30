@@ -15,7 +15,11 @@ export default function CheckoutPage() {
   const subtotal = cart.reduce((acc, item) => acc + (item.produto.preco * item.quantidade), 0)
   const total = subtotal + selectedFreight
 
+  // Padrão "montado": o carrinho vem do localStorage via zustand, então
+  // renderizar antes da hidratação divergiria do HTML do servidor. Não há
+  // como saber isso sem um efeito.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
   }, [])
 

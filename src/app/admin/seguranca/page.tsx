@@ -54,8 +54,8 @@ export default function AdminSeguranca() {
         setAviso(acao === 'confirmar' ? 'Segundo fator ativado.' : 'Segundo fator desativado.')
         await buscarStatus()
       }
-    } catch (e: any) {
-      setErro(e.message)
+    } catch (e: unknown) {
+      setErro(e instanceof Error ? e.message : 'Erro na operação')
     } finally {
       setEnviando(false)
     }
