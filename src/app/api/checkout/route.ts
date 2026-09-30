@@ -82,9 +82,11 @@ export async function POST(request: Request) {
     const body = await lerCorpo(request, checkoutSchema);
     const quantidadePorProduto = lerItensDoCarrinho(body.cart);
 
-    const host = request.headers.get('host') || 'localhost:3000';
-    const protocol = host.includes('localhost') ? 'http' : 'https';
-    const baseUrl = `${protocol}://${host}`;
+    // As back_urls são para onde o Mercado Pago devolve o comprador depois
+    // do pagamento. Montá-las a partir do header Host deixaria o destino
+    // nas mãos de quem faz a requisição; APP_URL é configuração nossa.
+    const baseUrl = (process.env.APP_URL || 'http://localhost:3000').replace(/\/$/, '');
+    const protocol = new URL(baseUrl).protocol === 'https:' ? 'https' : 'http';
 
     // 2. Busca os produtos reais. O preço cobrado é sempre o preço do banco,
     // caso contrário o cliente poderia enviar qualquer valor no corpo da requisição.

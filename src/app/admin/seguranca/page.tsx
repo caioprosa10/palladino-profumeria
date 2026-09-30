@@ -17,6 +17,8 @@ export default function AdminSeguranca() {
   const [erro, setErro] = useState('')
   const [aviso, setAviso] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [emailStatus, setEmailStatus] = useState('')
+  const [testandoEmail, setTestandoEmail] = useState(false)
 
   const buscarStatus = async () => {
     try {
@@ -56,6 +58,23 @@ export default function AdminSeguranca() {
       setErro(e.message)
     } finally {
       setEnviando(false)
+    }
+  }
+
+  const enviarEmailTeste = async () => {
+    setEmailStatus(''); setTestandoEmail(true)
+    try {
+      const res = await fetch('/api/admin/email-teste', { method: 'POST' })
+      const d = await res.json()
+      setEmailStatus(
+        res.ok
+          ? `Enviado para ${d.para}. Confira a caixa de entrada e o spam.`
+          : `${d.error}${d.detalhe ? ` (${d.detalhe})` : ''}`
+      )
+    } catch {
+      setEmailStatus('Falha de rede ao chamar o servidor.')
+    } finally {
+      setTestandoEmail(false)
     }
   }
 
@@ -143,6 +162,25 @@ export default function AdminSeguranca() {
               </button>
             </div>
           </>
+        )}
+      </div>
+
+      <div style={{ ...caixa, marginTop: '25px' }}>
+        <h2 style={{ fontSize: '1.1rem', fontFamily: 'var(--font-serif)', marginBottom: '10px' }}>E-mail</h2>
+        <p style={{ fontSize: '0.9rem', color: '#475569', marginBottom: '18px', lineHeight: 1.6 }}>
+          Envia uma mensagem de teste para <strong>o endereço desta conta</strong>, para
+          confirmar que o SMTP está funcionando sem precisar provocar um pedido real de
+          redefinição de senha.
+        </p>
+
+        <button onClick={enviarEmailTeste} disabled={testandoEmail} className="btn btn-secondary">
+          {testandoEmail ? 'Enviando...' : 'Enviar e-mail de teste'}
+        </button>
+
+        {emailStatus && (
+          <p style={{ fontSize: '0.85rem', marginTop: '15px', color: '#334155', wordBreak: 'break-word' }}>
+            {emailStatus}
+          </p>
         )}
       </div>
     </div>

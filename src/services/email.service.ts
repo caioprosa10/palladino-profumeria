@@ -51,6 +51,36 @@ export class EmailService {
     `;
   }
 
+  /** Configuracao minima presente? Usado pelo aviso de boot e pelo teste. */
+  static configurado(): boolean {
+    return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS)
+  }
+
+  /**
+   * E-mail de verificacao, disparado pelo painel.
+   *
+   * Serve para o administrador confirmar que o SMTP funciona sem precisar
+   * provocar um pedido real de redefinicao de senha.
+   */
+  static async sendTest(to: string, userName: string) {
+    const html = this.baseHtml('Teste de configuracao', `
+      <h2>Configuracao de e-mail funcionando</h2>
+      <p>Ola <strong>${userName}</strong>,</p>
+      <p>Se voce esta lendo isto, o envio de e-mails da loja esta operando.</p>
+      <p style="font-size: 13px; color: #666;">
+        Disparado manualmente pelo painel administrativo em
+        ${new Date().toLocaleString('pt-BR')}.
+      </p>
+    `);
+
+    return transporter.sendMail({
+      from: `"${STORE_NAME}" <${STORE_EMAIL}>`,
+      to,
+      subject: 'Teste de configuracao - Palladino Profumeria',
+      html
+    });
+  }
+
   static async sendPasswordReset(to: string, userName: string, link: string) {
     const html = this.baseHtml('Redefinição de senha', `
       <h2>Redefinição de senha</h2>

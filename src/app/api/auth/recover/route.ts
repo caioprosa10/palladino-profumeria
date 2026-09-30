@@ -50,6 +50,19 @@ export async function POST(req: Request) {
       return resposta
     }
 
+    // Sempre APP_URL, nunca a URL da requisição: esta deriva do header
+    // Host, que o cliente controla. Com Host: evil.com, o link do token
+    // apontaria para o atacante.
+    //
+    // Conferido ANTES de emitir o token: sem destino válido para o link,
+    // criar o registro só deixaria lixo no banco.
+    const base = process.env.APP_URL?.replace(/\/$/, '')
+
+    if (!base) {
+      console.error('APP_URL não configurada: link de redefinição não pode ser gerado com segurança.')
+      return resposta
+    }
+
     // Invalida pedidos anteriores ainda pendentes: só o link mais recente vale.
     await prisma.tokenSenha.updateMany({
       where: { usuario_id: user.id, usadoEm: null },
@@ -67,7 +80,6 @@ export async function POST(req: Request) {
       },
     })
 
-    const base = process.env.APP_URL?.replace(/\/$/, '') || new URL(req.url).origin
     const link = `${base}/redefinir-senha?token=${token}`
 
     try {
