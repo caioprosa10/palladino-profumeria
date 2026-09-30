@@ -40,6 +40,17 @@ updates:
       - dependency-name: "eslint"
         update-types: ["version-update:semver-major"]
 
+      # prisma 7 — mudança estrutural, não incompatibilidade de versão:
+      # "The datasource property `url` is no longer supported in schema
+      # files. Move connection URLs to prisma.config.ts". Exige refazer a
+      # configuração do datasource e adotar adapter no PrismaClient.
+      # É um projeto próprio, com teste de migração e de restauração de
+      # backup antes de ir para produção — não um PR automático.
+      - dependency-name: "prisma"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@prisma/client"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
