@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useState, useSyncExternalStore } from 'react'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 
 const CHAVE = 'palladino_cookies_v1'
@@ -18,6 +19,8 @@ const CHAVE = 'palladino_cookies_v1'
  * no banco exigiria identificar a pessoa antes de ela consentir.
  */
 export function AvisoCookies() {
+  const caminho = usePathname()
+
   // Um contador só para avisar o React de que o valor externo mudou.
   const [versao, setVersao] = useState(0)
 
@@ -53,6 +56,10 @@ export function AvisoCookies() {
     }
     setVersao((v) => v + 1)
   }
+
+  // Não no painel: quem entra ali já tem conta e sessão, e o aviso
+  // cobria o conteúdo da visão geral.
+  if (caminho?.startsWith('/admin')) return null
 
   if (jaCiente) return null
 

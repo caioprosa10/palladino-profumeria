@@ -203,7 +203,12 @@ body.sub-page {
 
 .nav-links {
     display: flex;
-    gap: 40px;
+    /* Folga que acompanha a largura: em 1280px o vão fixo de 40px fazia o
+       menu encostar na marca e "Body Splash" quebrar em duas linhas. */
+    gap: clamp(16px, 2.2vw, 40px);
+    align-items: center;
+    /* Distância mínima da marca, para os dois nunca se tocarem. */
+    margin-left: 32px;
 }
 
 .nav-item {
@@ -1395,6 +1400,12 @@ body.sub-page {
         rgba(var(--color-gold-rgb), 0) 100%
     );
     width: 120px;
+}
+
+/* Item do menu em uma linha só: quebrar no meio de "Body Splash"
+   desalinha a barra inteira. */
+.nav-item {
+    white-space: nowrap;
 }
 
 /* Versaletes: o rótulo pequeno é o que dá o tom editorial */

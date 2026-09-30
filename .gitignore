@@ -56,3 +56,6 @@ test_*.js
 tests/.tmp/
 coverage/
 prisma/backups/
+
+# capturas do verificador de navegador
+capturas/
