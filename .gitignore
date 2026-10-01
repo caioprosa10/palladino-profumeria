@@ -60,3 +60,8 @@ prisma/backups/
 # capturas do verificador de navegador
 capturas/
 backups/
+
+# skills de agente instaladas pelo CLI do Neon (documentação de terceiros,
+# reinstalável com: neon skills -s neon -s neon-postgres -s neon-postgres-branches)
+.claude/
+skills-lock.json
