@@ -81,17 +81,11 @@ describe('checkout sem MP_ACCESS_TOKEN', () => {
     expect(corpo.error).not.toMatch(/token|access|mercadopago|stack|undefined/i)
   })
 
-  // DEFEITO CONHECIDO, aguardando decisão.
-  //
-  // A rota grava o pedido ANTES de chamar o Mercado Pago (comentário
-  // "Criar Pedido no Banco de Dados ANTES de chamar o Mercado Pago").
-  // Quando a chamada falha — e sem MP_ACCESS_TOKEN ela sempre falha —
-  // o pedido fica no banco em 'aguardando_pagamento', com um registro
-  // de Pagamento sem mp_id, e nada o recolhe. Cada tentativa de compra
-  // deixa mais um. Este teste descreve o comportamento desejado e falha
-  // de propósito; está marcado como skip para não bloquear o CI
-  // enquanto a correção não for aprovada.
-  it.skip('não deixa pedido órfão no banco quando o pagamento não pôde ser criado', async () => {
+  // A rota grava o pedido antes de chamar o Mercado Pago. Quando a
+  // chamada falha — e sem MP_ACCESS_TOKEN ela sempre falha — o pedido
+  // precisa ser desfeito, ou cada tentativa de compra deixaria um
+  // registro em 'aguardando_pagamento' que ninguém recolhe.
+  it('não deixa pedido órfão no banco quando o pagamento não pôde ser criado', async () => {
     const { POST } = await import('@/app/api/checkout/route')
 
     await POST(pedir({ cart: [{ produto: { id: produtoId }, quantidade: 1 }] }))

@@ -258,8 +258,21 @@ export async function POST(request: Request) {
       preferenceData.body.auto_return = 'approved';
     }
 
-    const preference = new Preference(client);
-    const response = await preference.create(preferenceData);
+    // O pedido já está gravado. Se a preferência não for criada, ele não
+    // tem como ser pago — e sem isto ficaria para sempre em
+    // 'aguardando_pagamento', somando lixo no painel a cada tentativa.
+    // ItemPedido, Pagamento e Shipping saem junto por onDelete: Cascade.
+    let response;
+    try {
+      const preference = new Preference(client);
+      response = await preference.create(preferenceData);
+    } catch (erroDoPagamento) {
+      await prisma.pedido.delete({ where: { id: novoPedido.id } }).catch(() => {
+        // Se nem apagar der certo, o erro original é o que importa para
+        // quem está comprando; o pedido órfão vira caso de limpeza.
+      });
+      throw erroDoPagamento;
+    }
 
     const urlDePagamento = response.sandbox_init_point || response.init_point;
     return NextResponse.json({ url: urlDePagamento });
