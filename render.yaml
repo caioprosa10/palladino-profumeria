@@ -39,11 +39,18 @@ services:
 
       # Cifra CPF, tokens de integração e segredos de 2FA em repouso.
       #
-      # ATENÇÃO: trocar esta chave torna ilegíveis os dados já cifrados.
-      # Guarde uma cópia num gerenciador de senhas — sem ela, não há
-      # recuperação.
+      # NÃO use generateValue aqui. O banco já contém dados cifrados com
+      # uma chave existente, e uma chave nova não os decifra: os campos
+      # viram bytes ilegíveis, sem recuperação possível. Deixar o Render
+      # gerar o valor a cada relançamento do blueprint destruiria esses
+      # dados em silêncio, sem erro de build e sem erro em tempo de
+      # execução — a falha só apareceria ao ler um registro antigo.
+      #
+      # Por isso é sync:false: o valor entra pelo painel, vindo do
+      # gerenciador de senhas. Para uma instalação nova, sem dados,
+      # gere a primeira chave com: openssl rand -base64 32
       - key: ENCRYPTION_KEY
-        generateValue: true
+        sync: false
 
       - key: NODE_VERSION
         value: "24"
