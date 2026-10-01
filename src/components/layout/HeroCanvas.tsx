@@ -235,6 +235,14 @@ export function HeroCanvas() {
           <p className="hero-description animate-reveal">
             Perfumes originais, alta fixação e sofisticação para todos os momentos.
           </p>
+          {/* O site roda em plano gratuito e hiberna sem tráfego. Quem
+              chega depois de um período de calma espera o servidor
+              acordar, e sem aviso parece que a página travou. Fica aqui,
+              e não no rodapé do hero, porque lá o banner de cookies o
+              encobre — justamente para o visitante de primeira viagem. */}
+          <p className="aviso-hospedagem animate-reveal">
+            O primeiro acesso pode levar até 1 minuto porque o site roda em plano gratuito.
+          </p>
         </div>
 
         <div className="hero-footer">
@@ -244,12 +252,6 @@ export function HeroCanvas() {
             </span>
             <span className="hint-text">PALLADINO AUTOMATIQUE</span>
           </div>
-          {/* O site roda em plano gratuito e hiberna sem tráfego. Quem
-              chega primeiro depois de um período de calma espera o
-              servidor acordar, e sem aviso parece que a página travou. */}
-          <p className="aviso-hospedagem">
-            O primeiro acesso pode levar até 1 minuto porque o site roda em plano gratuito.
-          </p>
         </div>
       </main>
     </>

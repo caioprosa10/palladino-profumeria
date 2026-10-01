@@ -480,22 +480,22 @@ body.sub-page {
 /* Aviso de hibernação do plano gratuito. Discreto de propósito: precisa
    ser lido por quem está esperando, sem disputar com o hero. */
 .aviso-hospedagem {
-    margin: 14px 0 0;
-    font-size: 0.65rem;
+    /* O espaçamento vem do gap do .hero-content, não de margem própria. */
+    margin: 4px 0 0;
+    font-size: 0.7rem;
     font-weight: 300;
-    letter-spacing: 0.08em;
-    line-height: 1.5;
-    text-align: center;
+    letter-spacing: 0.04em;
+    line-height: 1.6;
     color: var(--color-text-secondary);
-    opacity: 0.55;
-    max-width: 34ch;
-    margin-inline: auto;
+    opacity: 0.6;
+    max-width: 40ch;
+    transition-delay: 1s;
 }
 
 @media (max-width: 640px) {
     .aviso-hospedagem {
-        font-size: 0.6rem;
-        max-width: 28ch;
+        font-size: 0.65rem;
+        max-width: 30ch;
     }
 }
 
