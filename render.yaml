@@ -9,11 +9,12 @@
 # As imagens do catálogo que vieram versionadas seguem em public/ e são
 # servidas estaticamente.
 
-databases:
-  - name: palladino-db
-    plan: free
-    databaseName: palladino
-    postgresMajorVersion: "18"
+# O banco NÃO é declarado aqui de propósito.
+#
+# O Postgres gratuito do Render expira 30 dias depois de criado — não
+# hiberna, é excluído, junto com os dados. Por isso o banco fica num
+# provedor com plano gratuito permanente (Neon ou Supabase), e a URL de
+# conexão entra como variável do serviço.
 
 services:
   - type: web
@@ -25,11 +26,11 @@ services:
     healthCheckPath: /
 
     envVars:
-      # Vem do banco acima; o Render preenche a URL de conexão.
+      # URL do Postgres externo. Preencha pelo painel do Render.
+      # Precisa de sslmode=require — Neon e Supabase exigem TLS.
+      # Ex.: postgresql://user:senha@host.neon.tech/palladino?sslmode=require
       - key: DATABASE_URL
-        fromDatabase:
-          name: palladino-db
-          property: connectionString
+        sync: false
 
       # Gere com: openssl rand -base64 48
       # A aplicação não sobe sem isso, e não existe valor padrão de propósito.
