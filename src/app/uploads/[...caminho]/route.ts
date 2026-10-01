@@ -1,26 +1,22 @@
 import { NextResponse } from 'next/server'
-import fs from 'fs/promises'
-import path from 'path'
-import { getUploadDir } from '@/lib/upload'
+import { lerImagem } from '@/lib/upload'
 
 /**
- * Serve as imagens enviadas pelo painel quando UPLOADS_DIR aponta para um
- * volume fora de public/ — em produção o disco da aplicação é recriado a
- * cada deploy, então os uploads não podem morar junto do código.
+ * Serve as imagens enviadas pelo painel, que ficam no banco.
  *
- * Em desenvolvimento esta rota praticamente não é usada: arquivos reais em
- * public/uploads são servidos estaticamente pelo Next, que tem precedência
- * sobre rotas.
+ * As imagens do catálogo que vieram versionadas seguem em public/uploads e
+ * são atendidas estaticamente — o Next serve public/ antes das rotas —,
+ * então esta rota só responde pelo que foi enviado depois.
  */
 
-const TIPOS: Record<string, string> = {
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.png': 'image/png',
-  '.gif': 'image/gif',
-  '.webp': 'image/webp',
-  '.avif': 'image/avif',
-}
+/** Só imagens: .html ou .svg servidos daqui executariam script na origem. */
+const TIPOS_PERMITIDOS = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/avif',
+])
 
 export async function GET(
   _req: Request,
@@ -28,36 +24,35 @@ export async function GET(
 ) {
   const { caminho } = await props.params
 
-  const base = getUploadDir()
-  const destino = path.resolve(base, ...caminho)
-
-  // O caminho vem da URL. Sem esta checagem, "../../.env" sairia da pasta
-  // de uploads e serviria qualquer arquivo do servidor.
-  if (destino !== base && !destino.startsWith(base + path.sep)) {
+  // O nome é um único segmento gerado pelo servidor. Recusar caminhos com
+  // mais de um nível elimina qualquer tentativa de travessia antes de a
+  // consulta acontecer.
+  if (caminho.length !== 1) {
     return new NextResponse('Not found', { status: 404 })
   }
 
-  const ext = path.extname(destino).toLowerCase()
-  const tipo = TIPOS[ext]
+  const nome = caminho[0]
 
-  // Só imagens: nada de servir .html ou .svg, que executariam script na
-  // origem do site.
-  if (!tipo) {
+  // Formato exato do que geramos em saveImage.
+  if (!/^\d+-[0-9a-f]{12}\.(jpg|png|gif|webp|avif)$/.test(nome)) {
     return new NextResponse('Not found', { status: 404 })
   }
 
-  try {
-    const arquivo = await fs.readFile(destino)
-    return new NextResponse(new Uint8Array(arquivo), {
-      headers: {
-        'Content-Type': tipo,
-        'Content-Disposition': 'inline',
-        'X-Content-Type-Options': 'nosniff',
-        'Content-Security-Policy': "default-src 'none'; sandbox",
-        'Cache-Control': 'public, max-age=31536000, immutable',
-      },
-    })
-  } catch {
+  const arquivo = await lerImagem(nome)
+
+  if (!arquivo || !TIPOS_PERMITIDOS.has(arquivo.tipo)) {
     return new NextResponse('Not found', { status: 404 })
   }
+
+  return new NextResponse(new Uint8Array(arquivo.conteudo), {
+    headers: {
+      'Content-Type': arquivo.tipo,
+      'Content-Disposition': 'inline',
+      'X-Content-Type-Options': 'nosniff',
+      // Mesmo que algo escapasse da validação, nada executa daqui.
+      'Content-Security-Policy': "default-src 'none'; sandbox",
+      // O nome carrega timestamp e aleatório, então o conteúdo nunca muda.
+      'Cache-Control': 'public, max-age=31536000, immutable',
+    },
+  })
 }

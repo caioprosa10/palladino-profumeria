@@ -7,9 +7,10 @@ import { migrar, fazerBackup } from '../scripts/migrar-criptografia'
 
 const prisma = new PrismaClient()
 
-/** Grava direto no SQLite para simular dados antigos, em claro. */
+/** Grava direto no banco para simular dados antigos, em claro. */
 async function semCifrar(tabela: string, coluna: string, id: string, valor: string) {
-  await prisma.$executeRawUnsafe(`UPDATE "${tabela}" SET "${coluna}" = ? WHERE id = ?`, valor, id)
+  // Postgres usa $1/$2; o `?` do SQLite daria erro de sintaxe.
+  await prisma.$executeRawUnsafe(`UPDATE "${tabela}" SET "${coluna}" = $1 WHERE id = $2`, valor, id)
 }
 
 beforeAll(() => {
@@ -142,16 +143,17 @@ describe('migrar-criptografia', () => {
     expect(r.cifrados).toBe(0)
   })
 
-  it('gera backup do SQLite antes de alterar', async () => {
-    const destino = await fazerBackup(prisma)
+  it('gera backup cifrado antes de alterar', async () => {
+    const destino = await fazerBackup()
 
     expect(destino).toBeTruthy()
     expect(fs.existsSync(destino!)).toBe(true)
-    // Cópia consistente e utilizável: precisa ter conteúdo.
+    // Precisa ter conteúdo, e estar cifrado — não um despejo em claro.
     expect(fs.statSync(destino!).size).toBeGreaterThan(0)
+    expect(fs.readFileSync(destino!).subarray(0, 5).toString()).toBe('PPBK2')
 
     fs.unlinkSync(destino!)
-  })
+  }, 60000)
 
   it('não escreve valores sensíveis no log', async () => {
     const u = await prisma.user.create({

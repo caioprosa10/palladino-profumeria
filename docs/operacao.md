@@ -58,15 +58,22 @@ ver *Restauração* abaixo.
 npm run backup
 ```
 
-Gera uma cópia consistente com `VACUUM INTO` — nunca uma cópia bruta do
-arquivo, que poderia capturar um estado parcial enquanto a aplicação
-escreve — e a cifra com `ENCRYPTION_KEY`.
+Usa `pg_dump -Fc`, que produz um despejo consistente de um único ponto no
+tempo — copiar arquivos do diretório de dados com o servidor rodando
+capturaria um estado parcial. O resultado é cifrado com `ENCRYPTION_KEY`.
+
+O despejo inclui a tabela `Arquivo`, então as imagens enviadas pelo painel
+são cobertas pelo backup do banco.
+
+A URL de conexão é passada por variáveis `PG*`, não em argumento de
+processo: argumentos são legíveis por qualquer usuário da máquina, e a URL
+carrega a senha do banco.
 
 Variáveis:
 
 | Variável | Padrão | Para quê |
 | --- | --- | --- |
-| `BACKUP_DIR` | `/data/backups` | Onde gravar |
+| `BACKUP_DIR` | `./backups` | Onde gravar |
 | `BACKUP_RETENCAO_DIAS` | `14` | Backups mais antigos são apagados |
 
 ### Restauração
@@ -75,18 +82,32 @@ Variáveis:
 npm run restaurar -- /data/backups/backup-<data>.db.enc --destino /tmp/teste.db
 ```
 
-A restauração confere `PRAGMA integrity_check` e conta tabelas, produtos e
-usuários, para você ver que o conteúdo voltou — não apenas que o arquivo
-abriu.
+Usa `pg_restore --clean --if-exists`, para o resultado ser o estado do
+backup e não uma mistura com o que já existia. Depois conta tabelas,
+produtos, usuários e arquivos, para você ver que o conteúdo voltou — não
+apenas que o arquivo abriu.
 
-Sem `--destino`, restaura sobre o banco atual e pede confirmação.
-**Pare a aplicação antes de restaurar sobre o banco em uso.**
+Sem `--destino`, restaura sobre o banco de `DATABASE_URL` e pede
+confirmação. **Pare a aplicação antes disso.**
+
+Para ensaiar sem risco, restaure num banco separado:
+
+```bash
+createdb palladino_ensaio
+npm run restaurar -- backups/backup-<data>.dump.enc \
+  --destino postgresql://USUARIO@localhost:5432/palladino_ensaio
+```
 
 ### Guardar fora do Render
 
-O disco do Render é a mesma falha única do banco. Envie os backups para
-outro lugar — S3, Backblaze, Google Drive — e **teste a restauração**, não
-só a geração. Backup nunca testado não é backup.
+O plano gratuito do Render mantém backups próprios do Postgres por pouco
+tempo, e o banco é o único lugar onde o estado existe. Envie os arquivos
+para outro lugar — S3, Backblaze, Google Drive — e **teste a
+restauração**, não só a geração. Backup nunca testado não é backup.
+
+`ENCRYPTION_KEY` precisa ser preservada **em local separado dos backups**:
+é ela que os torna legíveis, e guardar as duas coisas juntas anula a
+cifragem.
 
 ---
 
@@ -155,9 +176,13 @@ npm test          # suíte completa
 npm run test:watch
 ```
 
-O banco de testes é um arquivo próprio em `tests/.tmp/`, criado e
-descartado pela suíte. Nunca toca o banco de desenvolvimento nem o de
-produção.
+A suíte usa um Postgres próprio (`palladino_test` por padrão, ou
+`TEST_DATABASE_URL`), o mesmo motor da produção. Nunca toca o banco de
+desenvolvimento nem o de produção.
+
+Os testes de backup criam e descartam um banco `palladino_restore`, porque
+`pg_restore --clean` derruba tudo antes de recriar — restaurar sobre o
+banco de testes apagaria os dados no meio da suíte.
 
 `.github/workflows/ci.yml` roda a cada push na main, em pull request e
 semanalmente: lint, verificação de tipos, testes, build,

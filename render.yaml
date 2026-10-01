@@ -1,8 +1,19 @@
 # Deploy no Render (https://render.com).
 #
-# O disco da aplicação é recriado a cada deploy, então o banco SQLite e as
-# imagens enviadas pelo painel ficam num volume persistente montado em /data.
-# Sem isso, todo deploy apagaria pedidos, contas e fotos de produto.
+# O plano gratuito não oferece disco persistente — `render blueprints
+# validate` recusa com "disks are not supported for free tier services".
+# Por isso o estado fica todo no Postgres: o banco, e também as imagens
+# enviadas pelo painel, na tabela Arquivo. O sistema de arquivos da
+# aplicação é descartável, e nada importante depende dele.
+#
+# As imagens do catálogo que vieram versionadas seguem em public/ e são
+# servidas estaticamente.
+
+databases:
+  - name: palladino-db
+    plan: free
+    databaseName: palladino
+    postgresMajorVersion: "18"
 
 services:
   - type: web
@@ -13,30 +24,42 @@ services:
     startCommand: npm start
     healthCheckPath: /
 
-    disk:
-      name: dados
-      mountPath: /data
-      sizeGB: 1
-
     envVars:
-      # Banco e uploads no volume, não no disco descartável da aplicação.
+      # Vem do banco acima; o Render preenche a URL de conexão.
       - key: DATABASE_URL
-        value: file:/data/prod.db
-      - key: UPLOADS_DIR
-        value: /data/uploads
+        fromDatabase:
+          name: palladino-db
+          property: connectionString
 
       # Gere com: openssl rand -base64 48
       # A aplicação não sobe sem isso, e não existe valor padrão de propósito.
       - key: JWT_SECRET
         generateValue: true
 
-      # Alinhado ao Node usado em desenvolvimento e exigido pelas
-      # ferramentas de teste.
+      # Cifra CPF, tokens de integração e segredos de 2FA em repouso.
+      #
+      # ATENÇÃO: trocar esta chave torna ilegíveis os dados já cifrados.
+      # Guarde uma cópia num gerenciador de senhas — sem ela, não há
+      # recuperação.
+      - key: ENCRYPTION_KEY
+        generateValue: true
+
       - key: NODE_VERSION
         value: "24"
 
-      # Preencha pelo painel do Render (marcadas como sync:false para não
-      # ficarem escritas neste arquivo, que é público).
+      # Publica a política CSP estrita em paralelo, sem bloquear, para
+      # medir o que ainda quebraria. Lida no build.
+      - key: CSP_REPORT_ONLY
+        value: "true"
+
+      # Preencha pelo painel do Render (sync:false para não ficarem
+      # escritas neste arquivo, que é público).
+      #
+      # APP_URL é a URL pública do serviço. Obrigatória: sem ela os links
+      # de e-mail dependeriam do header Host, que o cliente controla.
+      - key: APP_URL
+        sync: false
+
       - key: MP_ACCESS_TOKEN
         sync: false
       - key: MP_WEBHOOK_SECRET
@@ -50,4 +73,20 @@ services:
       - key: ADMIN_EMAIL
         sync: false
       - key: ADMIN_PASSWORD
+        sync: false
+
+      # SMTP, para e-mails transacionais e redefinição de senha.
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+
+      # Turnstile (CAPTCHA). A SITE_KEY afeta o CSP e é lida no build.
+      - key: TURNSTILE_SITE_KEY
+        sync: false
+      - key: TURNSTILE_SECRET_KEY
         sync: false

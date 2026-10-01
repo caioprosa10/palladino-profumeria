@@ -6,20 +6,22 @@
  * procedimento testado, não uma improvisação no dia do incidente.
  *
  * Uso:
- *   npx tsx scripts/restaurar.ts <arquivo.db.enc> --destino /tmp/teste.db
- *   npx tsx scripts/restaurar.ts <arquivo.db.enc>    # sobre o banco atual
+ *   npm run restaurar -- <arquivo.dump.enc> --destino postgresql://.../teste
+ *   npm run restaurar -- <arquivo.dump.enc>    # sobre o banco de DATABASE_URL
  */
 
 import crypto from 'crypto'
 import fs from 'fs'
+import os from 'os'
 import path from 'path'
 import readline from 'readline'
+import { spawn } from 'child_process'
 import { PrismaClient } from '@prisma/client'
 
 const ALGORITMO = 'aes-256-gcm'
 const TAMANHO_IV = 12
 const TAMANHO_TAG = 16
-const CABECALHO = Buffer.from('PPBK1')
+const CABECALHO = Buffer.from('PPBK2')
 
 function chave(): Buffer {
   const bruta = process.env.ENCRYPTION_KEY
@@ -29,17 +31,6 @@ function chave(): Buffer {
 
   const b64 = Buffer.from(bruta, 'base64')
   return b64.length === 32 ? b64 : crypto.createHash('sha256').update(bruta, 'utf8').digest()
-}
-
-/** Caminho do banco em uso, a partir da DATABASE_URL. */
-export function caminhoDoBanco(): string {
-  const url = process.env.DATABASE_URL ?? ''
-  if (!url.startsWith('file:')) {
-    throw new Error('DATABASE_URL não aponta para um arquivo SQLite.')
-  }
-
-  const bruto = url.slice('file:'.length)
-  return path.isAbsolute(bruto) ? bruto : path.resolve(process.cwd(), 'prisma', bruto)
 }
 
 export function decifrarBackup(origem: string, destino: string): void {
@@ -71,39 +62,83 @@ export function decifrarBackup(origem: string, destino: string): void {
   fs.writeFileSync(destino, claro)
 }
 
+/**
+ * Decompõe a URL em variáveis PG*, para a senha não aparecer na lista de
+ * processos — argumentos de processo são legíveis por qualquer usuário da
+ * máquina, e a URL de conexão carrega a senha do banco.
+ */
+export function ambienteDoPostgres(url: string): Record<string, string> {
+  const u = new URL(url)
+
+  return {
+    PGHOST: u.hostname,
+    PGPORT: u.port || '5432',
+    PGUSER: decodeURIComponent(u.username),
+    ...(u.password ? { PGPASSWORD: decodeURIComponent(u.password) } : {}),
+    PGDATABASE: u.pathname.replace(/^\//, ''),
+    // O Postgres do Render exige TLS.
+    ...(u.searchParams.get('sslmode') ? { PGSSLMODE: u.searchParams.get('sslmode')! } : {}),
+    PGCONNECT_TIMEOUT: '30',
+  }
+}
+
+/** Carrega o despejo com pg_restore. */
+export function restaurarDump(dump: string, url: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn(
+      'pg_restore',
+      // --clean --if-exists derruba o que existe antes de recriar, para a
+      // restauração ser o estado do backup e não uma mistura dos dois.
+      ['--clean', '--if-exists', '--no-owner', '--no-acl', '-d', ambienteDoPostgres(url).PGDATABASE!, dump],
+      {
+        env: { ...process.env, ...ambienteDoPostgres(url) },
+        stdio: ['ignore', 'ignore', 'pipe'],
+      }
+    )
+
+    let erro = ''
+    proc.stderr.on('data', (d) => (erro += String(d)))
+
+    proc.on('error', (e) =>
+      reject(new Error(`pg_restore não pôde ser executado: ${e.message}. Está instalado?`))
+    )
+
+    proc.on('close', (codigo) => {
+      if (codigo === 0) resolve()
+      else reject(new Error(`pg_restore falhou (código ${codigo}): ${erro.slice(0, 300)}`))
+    })
+  })
+}
+
 export interface Integridade {
   ok: boolean
-  detalhe: string
   tabelas: number
   produtos: number
   usuarios: number
+  arquivos: number
 }
 
 /**
- * Confere se o arquivo restaurado é um banco utilizável.
+ * Confere se o banco restaurado é utilizável.
  *
- * `PRAGMA integrity_check` detecta corrupção estrutural; contar registros
- * confirma que o conteúdo chegou, e não só a estrutura.
+ * Contar registros confirma que o conteúdo chegou, e não só a estrutura.
  */
-export async function verificarIntegridade(arquivo: string): Promise<Integridade> {
-  const prisma = new PrismaClient({ datasources: { db: { url: `file:${arquivo}` } } })
+export async function verificarIntegridade(url: string): Promise<Integridade> {
+  const prisma = new PrismaClient({ datasources: { db: { url } } })
 
   try {
-    const check = await prisma.$queryRawUnsafe<{ integrity_check: string }[]>(
-      'PRAGMA integrity_check'
-    )
-    const detalhe = check[0]?.integrity_check ?? 'sem resposta'
-
     const tabelas = await prisma.$queryRawUnsafe<{ n: bigint }[]>(
-      "SELECT COUNT(*) as n FROM sqlite_master WHERE type = 'table'"
+      "SELECT COUNT(*) as n FROM information_schema.tables WHERE table_schema = 'public'"
     )
+
+    const total = Number(tabelas[0]?.n ?? 0)
 
     return {
-      ok: detalhe === 'ok',
-      detalhe,
-      tabelas: Number(tabelas[0]?.n ?? 0),
+      ok: total > 10,
+      tabelas: total,
       produtos: await prisma.produto.count(),
       usuarios: await prisma.user.count(),
+      arquivos: await prisma.arquivo.count(),
     }
   } finally {
     await prisma.$disconnect()
@@ -125,7 +160,7 @@ async function main() {
   const origem = process.argv[2]
 
   if (!origem) {
-    console.error('Uso: npx tsx scripts/restaurar.ts <arquivo.db.enc> [--destino /caminho.db]')
+    console.error('Uso: npm run restaurar -- <arquivo.dump.enc> [--destino <url>]')
     process.exit(1)
   }
 
@@ -136,11 +171,16 @@ async function main() {
 
   const i = process.argv.indexOf('--destino')
   const sobrescreve = i === -1
-  const destino = sobrescreve ? caminhoDoBanco() : process.argv[i + 1]
+  const url = sobrescreve ? process.env.DATABASE_URL : process.argv[i + 1]
+
+  if (!url) {
+    console.error('Sem destino: informe --destino ou defina DATABASE_URL.')
+    process.exit(1)
+  }
 
   if (sobrescreve) {
-    console.log(`\n⚠️  Isto vai SOBRESCREVER o banco em uso:\n    ${destino}`)
-    console.log('    Pare a aplicação antes de continuar, ou a restauração pode corromper o arquivo.\n')
+    console.log('\n⚠️  Isto vai SOBRESCREVER o banco de DATABASE_URL.')
+    console.log('    Pare a aplicação antes de continuar.\n')
 
     if (!(await confirmar('Digite "sim" para prosseguir: '))) {
       console.log('Cancelado.')
@@ -148,21 +188,30 @@ async function main() {
     }
   }
 
-  decifrarBackup(origem, destino)
-  console.log(`\nRestaurado em: ${destino}`)
+  const temporario = path.join(os.tmpdir(), `restaurar-${Date.now()}.dump`)
 
-  const r = await verificarIntegridade(destino)
+  try {
+    decifrarBackup(origem, temporario)
+    console.log('\nBackup decifrado.')
 
-  console.log(`Integridade:  ${r.detalhe}`)
-  console.log(`Tabelas:      ${r.tabelas}`)
-  console.log(`Produtos:     ${r.produtos}`)
-  console.log(`Usuários:     ${r.usuarios}`)
+    await restaurarDump(temporario, url)
+    console.log('Despejo carregado.')
 
-  if (!r.ok) {
-    console.error('\n❌ O banco restaurado não passou na verificação de integridade.')
-    process.exitCode = 1
-  } else {
-    console.log('\n✅ Banco restaurado e íntegro.')
+    const r = await verificarIntegridade(url)
+
+    console.log(`\nTabelas:   ${r.tabelas}`)
+    console.log(`Produtos:  ${r.produtos}`)
+    console.log(`Usuários:  ${r.usuarios}`)
+    console.log(`Arquivos:  ${r.arquivos}`)
+
+    if (!r.ok) {
+      console.error('\n❌ O banco restaurado não parece completo.')
+      process.exitCode = 1
+    } else {
+      console.log('\n✅ Banco restaurado e verificado.')
+    }
+  } finally {
+    if (fs.existsSync(temporario)) fs.unlinkSync(temporario)
   }
 }
 

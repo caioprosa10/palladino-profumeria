@@ -14,8 +14,6 @@
  * Nunca registra valores em log — apenas contagens. Ver docs/operacao.md.
  */
 
-import fs from 'fs'
-import path from 'path'
 import { Prisma, PrismaClient } from '@prisma/client'
 import { cifrar, decifrar, estaCifrado } from '../src/lib/cripto'
 
@@ -94,34 +92,22 @@ const CAMPOS: Campo[] = [
   },
 ]
 
-/** Caminho do arquivo SQLite a partir da DATABASE_URL. */
-function caminhoDoBanco(): string | null {
-  const url = process.env.DATABASE_URL ?? ''
-  if (!url.startsWith('file:')) return null
-
-  const bruto = url.slice('file:'.length)
-  // Prisma resolve caminhos relativos a partir da pasta do schema.
-  return path.isAbsolute(bruto) ? bruto : path.resolve(process.cwd(), 'prisma', bruto)
-}
-
 /**
- * Cópia consistente antes de alterar.
+ * Cópia de segurança antes de alterar.
  *
- * VACUUM INTO em vez de copiar o arquivo: copiar enquanto a aplicação
- * escreve pode capturar um estado parcial, sem o WAL.
+ * Delega para scripts/backup.ts, que usa pg_dump e cifra o resultado —
+ * mesmo caminho testado pela suíte, em vez de uma segunda implementação
+ * aqui.
  */
-export async function fazerBackup(prisma: PrismaClient): Promise<string | null> {
-  const origem = caminhoDoBanco()
-  if (!origem || !fs.existsSync(origem)) return null
-
-  const pasta = path.join(path.dirname(origem), 'backups')
-  fs.mkdirSync(pasta, { recursive: true })
-
-  const destino = path.join(pasta, `antes-da-migracao-${new Date().toISOString().replace(/[:.]/g, '-')}.db`)
-
-  // VACUUM INTO falha se o destino existir, então o nome carrega a data.
-  await prisma.$executeRawUnsafe(`VACUUM INTO '${destino.replace(/'/g, "''")}'`)
-  return destino
+export async function fazerBackup(): Promise<string | null> {
+  try {
+    const { gerarBackup } = await import('./backup')
+    const r = await gerarBackup()
+    return r.arquivo
+  } catch (e) {
+    console.error(`Backup falhou: ${(e as Error).message}`)
+    return null
+  }
 }
 
 export interface Resultado {
@@ -192,8 +178,15 @@ async function main() {
     console.log(dryRun ? '\nSimulação (nenhuma alteração será gravada)\n' : '\nMigração de criptografia\n')
 
     if (!dryRun) {
-      const backup = await fazerBackup(prisma)
-      console.log(backup ? `Backup: ${backup}\n` : 'Backup ignorado (banco não é SQLite local)\n')
+      const backup = await fazerBackup()
+
+      if (!backup) {
+        console.error('Sem backup não seguimos: corrija o erro acima e rode de novo.')
+        process.exitCode = 1
+        return
+      }
+
+      console.log(`Backup: ${backup}\n`)
     }
 
     const r = await migrar(prisma, { dryRun })

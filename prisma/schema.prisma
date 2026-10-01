@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -136,6 +136,27 @@ model Produto {
   itensPed           ItemPedido[]
   marca              Marca?         @relation(fields: [marca_id], references: [id])
   categoria          Categoria      @relation(fields: [categoria_id], references: [id])
+}
+
+/// Arquivos enviados pelo painel, guardados no banco.
+///
+/// O plano gratuito do Render não oferece disco persistente: o sistema de
+/// arquivos da aplicação é recriado a cada deploy. Guardar aqui faz os
+/// uploads sobreviverem, e o backup do banco passa a cobri-los também.
+///
+/// As imagens do catálogo que vieram versionadas continuam em public/ e
+/// são servidas estaticamente — o Next atende public/ antes das rotas.
+model Arquivo {
+  id        String   @id @default(cuid())
+  /// Nome gerado pelo servidor, que compõe a URL pública.
+  nome      String   @unique
+  /// Tipo MIME confirmado pelos bytes iniciais, não pelo que o cliente diz.
+  tipo      String
+  tamanho   Int
+  conteudo  Bytes
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model Imagem {

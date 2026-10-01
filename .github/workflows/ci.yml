@@ -25,6 +25,23 @@ jobs:
   verificar:
     runs-on: ubuntu-latest
 
+    # A suíte roda contra Postgres, o mesmo motor da produção. Rodar em
+    # SQLite aqui esconderia divergências de dialeto até o deploy.
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: palladino_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v7
         with:
@@ -57,9 +74,26 @@ jobs:
             echo "JWT_SECRET=$JWT"
             echo "ENCRYPTION_KEY=$ENC"
             echo "APP_URL=http://localhost:3000"
-            # SQLite temporário, na área descartável do runner.
-            echo "DATABASE_URL=file:$RUNNER_TEMP/ci.db"
+            # Postgres do serviço acima. Credenciais locais ao runner,
+            # descartadas com ele.
+            echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/palladino_test"
+            echo "TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/palladino_test"
           } >> "$GITHUB_ENV"
+
+      # Os testes de backup chamam pg_dump e pg_restore. A imagem do
+      # runner traz o cliente 16; a 18 é necessária para ler despejos do
+      # servidor 18.
+      - name: Instalar cliente do PostgreSQL 18
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+            https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] \
+            https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-18
+          pg_dump --version
 
       - name: Instalar dependências
         run: npm ci
@@ -73,6 +107,9 @@ jobs:
 
       - name: Verificação de tipos
         run: npx tsc --noEmit
+
+      - name: Aplicar migrações no banco de testes
+        run: npx prisma migrate deploy
 
       - name: Testes
         run: npm test

@@ -5,24 +5,87 @@ import os from 'os'
 import path from 'path'
 import { PrismaClient } from '@prisma/client'
 import { gerarBackup, limparAntigos, retencaoDias, SUFIXO } from '../scripts/backup'
-import { decifrarBackup, verificarIntegridade } from '../scripts/restaurar'
+import {
+  decifrarBackup,
+  restaurarDump,
+  verificarIntegridade,
+  ambienteDoPostgres,
+} from '../scripts/restaurar'
 
 const prisma = new PrismaClient()
 const tmp = path.join(os.tmpdir(), 'palladino-teste-backup')
 
+/**
+ * Banco separado para o destino da restauração: `pg_restore --clean`
+ * derruba e recria tudo, então restaurar sobre o banco de testes apagaria
+ * os dados no meio da suíte.
+ */
+const urlTeste = process.env.DATABASE_URL!
+const urlDestino = urlTeste.replace(/\/[^/?]+(\?|$)/, '/palladino_restore$1')
+
+function nomeDoBanco(url: string) {
+  return ambienteDoPostgres(url).PGDATABASE
+}
+
+function psql(sql: string, banco = 'postgres') {
+  const env = { ...process.env, ...ambienteDoPostgres(urlTeste), PGDATABASE: banco }
+  execSync(`psql -v ON_ERROR_STOP=1 -c ${JSON.stringify(sql)}`, { env, stdio: 'pipe' })
+}
+
 beforeAll(() => {
   execSync('npx prisma migrate deploy', { stdio: 'pipe' })
+
+  // Banco de destino limpo para os testes de restauração.
+  try {
+    psql(`DROP DATABASE IF EXISTS ${nomeDoBanco(urlDestino)}`)
+  } catch {
+    // Pode não existir ainda.
+  }
+  psql(`CREATE DATABASE ${nomeDoBanco(urlDestino)}`)
 })
 
 beforeEach(async () => {
   fs.rmSync(tmp, { recursive: true, force: true })
   fs.mkdirSync(tmp, { recursive: true })
+  await prisma.arquivo.deleteMany({})
   await prisma.user.deleteMany({})
 })
 
 afterAll(async () => {
   fs.rmSync(tmp, { recursive: true, force: true })
   await prisma.$disconnect()
+
+  try {
+    psql(`DROP DATABASE IF EXISTS ${nomeDoBanco(urlDestino)}`)
+  } catch {
+    // Melhor deixar o banco de sobra do que falhar a suíte na limpeza.
+  }
+})
+
+describe('ambienteDoPostgres', () => {
+  it('decompõe a URL sem deixar a senha em argumento', () => {
+    const e = ambienteDoPostgres('postgresql://usuario:segredo@host.exemplo:5433/meubanco?sslmode=require')
+
+    expect(e.PGHOST).toBe('host.exemplo')
+    expect(e.PGPORT).toBe('5433')
+    expect(e.PGUSER).toBe('usuario')
+    expect(e.PGDATABASE).toBe('meubanco')
+    expect(e.PGSSLMODE).toBe('require')
+    // A senha vai por variável de ambiente, não na linha de comando.
+    expect(e.PGPASSWORD).toBe('segredo')
+  })
+
+  it('assume a porta padrão e aceita URL sem senha', () => {
+    const e = ambienteDoPostgres('postgresql://eu@localhost/banco')
+
+    expect(e.PGPORT).toBe('5432')
+    expect(e.PGPASSWORD).toBeUndefined()
+  })
+
+  it('decodifica caracteres escapados na senha', () => {
+    const e = ambienteDoPostgres('postgresql://u:a%40b%3Ac@h/d')
+    expect(e.PGPASSWORD).toBe('a@b:c')
+  })
 })
 
 describe('backup', () => {
@@ -33,11 +96,11 @@ describe('backup', () => {
     expect(r.bytes).toBeGreaterThan(0)
     expect(r.arquivo.endsWith(SUFIXO)).toBe(true)
 
-    // Não é um SQLite em claro: o cabeçalho é nosso, não 'SQLite format 3'.
+    // Não é um despejo em claro: o cabeçalho é nosso, não 'PGDMP'.
     const inicio = fs.readFileSync(r.arquivo).subarray(0, 16).toString('binary')
-    expect(inicio).not.toContain('SQLite format')
-    expect(inicio.startsWith('PPBK1')).toBe(true)
-  })
+    expect(inicio).not.toContain('PGDMP')
+    expect(inicio.startsWith('PPBK2')).toBe(true)
+  }, 60000)
 
   it('recusa gerar backup sem ENCRYPTION_KEY, em vez de gravar em claro', async () => {
     const guardada = process.env.ENCRYPTION_KEY
@@ -50,13 +113,12 @@ describe('backup', () => {
     }
   })
 
-  it('não deixa a cópia intermediária em claro na pasta de backups', async () => {
+  it('não deixa o despejo em claro na pasta de backups', async () => {
     await gerarBackup({ destino: tmp })
 
     const arquivos = fs.readdirSync(tmp)
-    // Só o .db.enc; nada de .db solto.
     expect(arquivos.every((a) => a.endsWith(SUFIXO))).toBe(true)
-  })
+  }, 60000)
 
   it('remove backups além da retenção e preserva os recentes', () => {
     const antigo = path.join(tmp, `backup-antigo${SUFIXO}`)
@@ -104,35 +166,47 @@ describe('backup', () => {
 
 describe('restauração', () => {
   it('restaura o backup e os dados voltam iguais', async () => {
-    // Dado conhecido, para conferir depois da volta.
+    // Dados conhecidos, incluindo uma imagem, para conferir na volta.
     await prisma.user.create({
       data: { nome: 'Antes do Backup', email: 'antes@teste.com', senha: 'hash-conhecido' },
     })
-    const antes = await prisma.user.count()
+    await prisma.arquivo.create({
+      data: {
+        nome: '1700000000-aabbccddeeff.png',
+        tipo: 'image/png',
+        tamanho: 4,
+        conteudo: Buffer.from([1, 2, 3, 4]),
+      },
+    })
 
     const r = await gerarBackup({ destino: tmp })
 
-    // Simula perda: o banco restaurado vai para outro caminho.
-    const destino = path.join(tmp, 'restaurado.db')
-    decifrarBackup(r.arquivo, destino)
+    // Simula perda: restaura num banco separado.
+    const dump = path.join(tmp, 'restaurado.dump')
+    decifrarBackup(r.arquivo, dump)
+    await restaurarDump(dump, urlDestino)
 
-    const integridade = await verificarIntegridade(destino)
+    const integridade = await verificarIntegridade(urlDestino)
 
     expect(integridade.ok).toBe(true)
-    expect(integridade.detalhe).toBe('ok')
     expect(integridade.tabelas).toBeGreaterThan(10)
-    expect(integridade.usuarios).toBe(antes)
+    expect(integridade.usuarios).toBe(1)
+    expect(integridade.arquivos).toBe(1)
 
     // O registro específico voltou, com o conteúdo certo.
-    const restaurado = new PrismaClient({ datasources: { db: { url: `file:${destino}` } } })
+    const restaurado = new PrismaClient({ datasources: { db: { url: urlDestino } } })
     try {
       const u = await restaurado.user.findUnique({ where: { email: 'antes@teste.com' } })
       expect(u?.nome).toBe('Antes do Backup')
       expect(u?.senha).toBe('hash-conhecido')
+
+      // A imagem voltou byte a byte.
+      const a = await restaurado.arquivo.findUnique({ where: { nome: '1700000000-aabbccddeeff.png' } })
+      expect(Buffer.from(a!.conteudo)).toEqual(Buffer.from([1, 2, 3, 4]))
     } finally {
       await restaurado.$disconnect()
     }
-  })
+  }, 120000)
 
   it('recusa arquivo adulterado', async () => {
     const r = await gerarBackup({ destino: tmp })
@@ -142,14 +216,14 @@ describe('restauração', () => {
     dados[Math.floor(dados.length / 2)] ^= 0xff
     fs.writeFileSync(r.arquivo, dados)
 
-    expect(() => decifrarBackup(r.arquivo, path.join(tmp, 'x.db'))).toThrow(/decifrar/)
-  })
+    expect(() => decifrarBackup(r.arquivo, path.join(tmp, 'x.dump'))).toThrow(/decifrar/)
+  }, 60000)
 
   it('recusa arquivo que não é um backup nosso', () => {
-    const falso = path.join(tmp, 'qualquer.db.enc')
+    const falso = path.join(tmp, `qualquer${SUFIXO}`)
     fs.writeFileSync(falso, 'conteúdo aleatório que não é backup')
 
-    expect(() => decifrarBackup(falso, path.join(tmp, 'y.db'))).toThrow(/cabeçalho/)
+    expect(() => decifrarBackup(falso, path.join(tmp, 'y.dump'))).toThrow(/cabeçalho/)
   })
 
   it('recusa restaurar com a chave errada', async () => {
@@ -160,9 +234,9 @@ describe('restauração', () => {
       // Outra chave de 32 bytes.
       process.env.ENCRYPTION_KEY = Buffer.alloc(32, 7).toString('base64')
 
-      expect(() => decifrarBackup(r.arquivo, path.join(tmp, 'z.db'))).toThrow(/ENCRYPTION_KEY/)
+      expect(() => decifrarBackup(r.arquivo, path.join(tmp, 'z.dump'))).toThrow(/ENCRYPTION_KEY/)
     } finally {
       process.env.ENCRYPTION_KEY = guardada
     }
-  })
+  }, 60000)
 })
