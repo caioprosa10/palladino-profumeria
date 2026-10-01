@@ -10,6 +10,15 @@ recomendação.
 > pagamento, frete, e-mail e IA. O catálogo, a busca, o carrinho, o
 > login e o painel funcionam; o checkout vai até a tela de pagamento e
 > para ali. Veja [O que funciona sem chaves](#o-que-funciona-sem-chaves).
+>
+> **O primeiro acesso pode levar até 1 minuto.** O serviço roda no plano
+> gratuito do Render, que hiberna após 15 minutos sem tráfego e leva
+> cerca de um minuto para acordar. Depois disso as páginas respondem em
+> frações de segundo. A cota gratuita é de 750 horas de instância por
+> mês e por workspace — um mês tem 744 horas, então manter o serviço
+> acordado em tempo integral consumiria a cota inteira e não sobraria
+> nada para nenhum outro serviço. Por isso a hibernação fica como está,
+> e o aviso aparece também na página inicial.
 
 ## Stack
 

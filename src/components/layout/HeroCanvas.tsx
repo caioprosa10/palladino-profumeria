@@ -244,6 +244,12 @@ export function HeroCanvas() {
             </span>
             <span className="hint-text">PALLADINO AUTOMATIQUE</span>
           </div>
+          {/* O site roda em plano gratuito e hiberna sem tráfego. Quem
+              chega primeiro depois de um período de calma espera o
+              servidor acordar, e sem aviso parece que a página travou. */}
+          <p className="aviso-hospedagem">
+            O primeiro acesso pode levar até 1 minuto porque o site roda em plano gratuito.
+          </p>
         </div>
       </main>
     </>
