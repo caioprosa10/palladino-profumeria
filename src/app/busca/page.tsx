@@ -18,11 +18,11 @@ export default async function BuscaPage({
       where: {
         ativo: true,
         OR: [
-          { nome: { contains: query } },
-          { descricao: { contains: query } },
-          { sku: { contains: query } },
-          { fragrancia: { contains: query } },
-          { marca: { nome: { contains: query } } }
+          { nome: { contains: query, mode: 'insensitive' } },
+          { descricao: { contains: query, mode: 'insensitive' } },
+          { sku: { contains: query, mode: 'insensitive' } },
+          { fragrancia: { contains: query, mode: 'insensitive' } },
+          { marca: { nome: { contains: query, mode: 'insensitive' } } }
         ]
       },
       include: {

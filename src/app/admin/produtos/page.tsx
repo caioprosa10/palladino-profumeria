@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { requireAdminPage } from '@/lib/guard'
 import Link from 'next/link'
@@ -14,11 +15,13 @@ export default async function AdminProdutos({
   const currentPage = Number(page) || 1
   const perPage = 10
 
-  const whereClause = q
+  // Anotado para o TypeScript preservar o literal 'insensitive' em vez
+  // de alargá-lo para string, que não casa com QueryMode.
+  const whereClause: Prisma.ProdutoWhereInput = q
     ? {
         OR: [
-          { nome: { contains: q } },
-          { sku: { contains: q } },
+          { nome: { contains: q, mode: 'insensitive' } },
+          { sku: { contains: q, mode: 'insensitive' } },
         ],
       }
     : {}
