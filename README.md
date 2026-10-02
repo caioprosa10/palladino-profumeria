@@ -37,6 +37,28 @@ recomendação.
 A aplicação precisa de um servidor Node: há rotas de API, páginas
 renderizadas no servidor e banco. Hospedagem estática não a executa.
 
+## Destaques técnicos
+
+- CSP com nonce por requisição e `strict-dynamic` no painel, sem
+  `unsafe-inline`, e uma política mais estrita publicada em paralelo no
+  modo Report-Only.
+- CPF, tokens de integração e segredos de segundo fator cifrados em
+  repouso com AES-256-GCM, com prefixo de versão para permitir rotação.
+- Segundo fator por TOTP no login, com códigos de recuperação de uso
+  único.
+- Sessões gravadas no banco e revogáveis: trocar a senha derruba o que
+  estiver aberto, e o logout invalida de fato em vez de só apagar o
+  cookie.
+- Limite de tentativas por IP e campo-isca contra robôs no cadastro.
+- O código do checkout lê preço e estoque do banco, recota o frete no
+  servidor e valida a assinatura HMAC do webhook de pagamento antes de
+  considerar um pedido pago.
+- O código só aceita um upload depois de conferir os bytes do arquivo,
+  guarda a imagem no banco e a serve com `sandbox` e `nosniff`.
+- Mais de 100 testes automatizados contra PostgreSQL real, com CI a cada
+  push: lint, tipos, testes, build, auditoria de dependências e varredura
+  de segredos — mais backup cifrado com restauração testada.
+
 ## Requisitos
 
 - Node.js 24 ou superior
